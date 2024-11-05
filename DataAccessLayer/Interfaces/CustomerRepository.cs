@@ -29,10 +29,19 @@ namespace DataAccessLayer.Interfaces
             return customer;
         }
 
-        //public Task DeleteCustomerAsync(int id)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task DeleteCustomerAsync(int id)
+        {
+            var customer = await _dbContext.Customers.FindAsync(id);
+            if (customer != null)
+            {
+                _dbContext.Customers.Remove(customer);
+                await _dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                throw new KeyNotFoundException("Cutomer Not found ");
+            }
+        }
 
 
 

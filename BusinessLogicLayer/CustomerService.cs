@@ -31,16 +31,17 @@ namespace BusinessLogicLayer
             return await _customerRepository.AddCustomerAsync(customer);
         }
 
-        public Task DeleteCustomerAsync(int id)
+        public async Task DeleteCustomerAsync(int id)
+        {
+            await _customerRepository.DeleteCustomerAsync(id);
+        }
+        
+
+
+        public Task<Customer> GetCustomerByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
-
-
-        //public Task<Customer> GetCustomerByIdAsync(int id)
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         //public Task UpdateCustomerAsync(Customer customer)
         //{

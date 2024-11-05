@@ -29,18 +29,18 @@ namespace WebAPI.Controllers
         }
 
         // GET: api/Customers/{id}
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<Customer>> GetCustomer(int id)
-        //{
-        //    var customer = await _customerService.GetCustomerByIdAsync(id);
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        {
+            var customer = await _customerService.GetCustomerByIdAsync(id);
 
-        //    if (customer == null)
-        //    {
-        //        return NotFound();
-        //    }
+            if (customer == null)
+            {
+                return NotFound();
+            }
 
-        //    return Ok(customer);
-        //}
+            return Ok(customer);
+        }
 
         //POST: api/Customers
        [HttpPost]
@@ -64,11 +64,18 @@ namespace WebAPI.Controllers
         //}
 
         // DELETE: api/Customers/{id}
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteCustomer(int id)
-        //{
-        //    await _customerService.DeleteCustomerAsync(id);
-        //    return NoContent();
-        //}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCustomer(int id)
+        {
+            try
+            {
+                await _customerService.DeleteCustomerAsync(id);
+                return Ok();
+            }
+            catch
+            {
+                return NotFound(new { message = "Customer not found." });
+            }
+        }
     }
 }
