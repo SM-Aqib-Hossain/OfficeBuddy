@@ -36,7 +36,7 @@ namespace WebAPI.Controllers
 
             if (customer == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Customer not found." });
             }
 
             return Ok(customer);

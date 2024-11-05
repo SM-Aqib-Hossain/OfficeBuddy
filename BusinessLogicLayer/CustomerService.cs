@@ -38,9 +38,9 @@ namespace BusinessLogicLayer
         
 
 
-        public Task<Customer> GetCustomerByIdAsync(int id)
+        public async Task<Customer> GetCustomerByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _customerRepository.GetCustomerByIdAsync(id);
         }
 
         //public Task UpdateCustomerAsync(Customer customer)

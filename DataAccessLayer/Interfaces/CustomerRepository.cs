@@ -45,10 +45,19 @@ namespace DataAccessLayer.Interfaces
 
 
 
-        //public Task<Customer> GetCustomerByIdAsync(int id)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task<Customer> GetCustomerByIdAsync(int id)
+        {
+            var customer =  await _dbContext.Customers.FindAsync(id);
+
+            if (customer != null)
+            {
+                return customer;
+            }
+            else
+            {
+                throw new KeyNotFoundException("Cutomer Not found ");
+            }
+        }
 
         //public Task UpdateCustomerAsync(Customer customer)
         //{
