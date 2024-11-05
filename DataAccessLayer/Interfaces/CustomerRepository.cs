@@ -18,7 +18,7 @@ namespace DataAccessLayer.Interfaces
         }
 
 
-        public async Task<IEnumerable<Customer>> GetCustomerAsync()
+        public async Task<List<Customer>> GetCustomerAsync()
         {
             return await _dbContext.Customers.ToListAsync();
         }

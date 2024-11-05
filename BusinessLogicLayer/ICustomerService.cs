@@ -10,7 +10,7 @@ namespace BusinessLogicLayer
 {
     public interface ICustomerService
     {
-        Task<IEnumerable<Customer>> GetCustomerAsync();
+        Task<List<Customer>> GetCustomerAsync();
         Task<Customer> GetCustomerByIdAsync(int id);
         Task<Customer> AddCustomerAsync(Customer customer);
         //Task UpdateCustomerAsync(Customer customer);

@@ -19,9 +19,9 @@ namespace BusinessLogicLayer
         }
         //
 
-        public async Task<IEnumerable<Customer>> GetCustomerAsync()
+        public async Task<List<Customer>> GetCustomerAsync()
         {
-            return await _customerRepository.GetCustomerAsync();    
+            return (List<Customer>)await _customerRepository.GetCustomerAsync();    
         }
 
 

@@ -1,0 +1,74 @@
+﻿@page "/"
+
+@using BusinessLogicLayer;
+@using DataAccessLayer.Entities;
+
+@inject NavigationManager Navigation
+@inject ICustomerService _customerService
+
+
+@rendermode InteractiveServer
+
+@inject IJSRuntime JS
+
+
+
+
+<PageTitle>Home</PageTitle>
+
+<h1>Customer List </h1>
+
+@if (customers == null)
+{
+    <p>Loading...</p>
+}
+else if (!customers.Any())
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">City</th>
+                
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customers)
+            {
+                <tr>
+                    <td scope="row">@customer.Id</td>
+                    <td>@customer.Name</td>
+                    <td>@customer.City</td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+@code {
+    // private List<Customer> customers;
+    // private readonly ICustomerService _customerService;
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     customers = await _customerService.GetCustomerAsync();
+    // }
+    // Use constructor injection for ICustomerService
+
+    private List<Customer> customers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        customers = await _customerService.GetCustomerAsync();
+    }
+    
+}
