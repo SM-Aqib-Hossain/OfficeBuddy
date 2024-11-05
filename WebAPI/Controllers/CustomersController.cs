@@ -41,7 +41,7 @@ namespace WebAPI.Controllers
 
             return Ok(customer);
         }
-        //hksdkhjsdfkhjdsfkj
+
         //POST: api/Customers
        [HttpPost]
         public async Task<ActionResult<Customer>> AddCustomer(Customer customer)
