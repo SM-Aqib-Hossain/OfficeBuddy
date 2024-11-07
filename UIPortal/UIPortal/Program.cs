@@ -17,8 +17,13 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddTransient<ICustomerService, CustomerService>(); // Ensure the implementation is correct
-builder.Services.AddTransient<ICustomerRepository, CustomerRepository>();
+//builder.Services.AddTransient<ICustomerService, CustomerService>(); // Ensure the implementation is correct
+//builder.Services.AddTransient<ICustomerRepository, CustomerRepository>();
+
+builder.Services.AddScoped(sp => new HttpClient 
+                { BaseAddress =
+                    new Uri(builder.Configuration["CustomerAppAPI:BaseUrl"]) });
+
 
 var app = builder.Build();
 
