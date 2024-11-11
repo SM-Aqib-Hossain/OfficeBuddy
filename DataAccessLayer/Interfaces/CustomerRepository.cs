@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -58,6 +59,22 @@ namespace DataAccessLayer.Interfaces
                 throw new KeyNotFoundException("Cutomer Not found ");
             }
         }
+        public async Task<Customer> Authenticate(string Name, string Password)
+        {
+            // Simulating authentication by checking the database for matching credentials
+            var customer = await _dbContext.Customers
+                .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
+
+            if (customer != null)
+            {
+                return customer;
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("Invalid credentials");
+            }
+        }
+
 
         //public Task UpdateCustomerAsync(Customer customer)
         //{

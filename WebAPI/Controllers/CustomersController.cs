@@ -1,11 +1,13 @@
 ﻿using BusinessLogicLayer;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
+using BusinessLogicLayer.Dto;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers
 {
@@ -76,6 +78,29 @@ namespace WebAPI.Controllers
             {
                 return NotFound(new { message = "Customer not found." });
             }
+        }
+        [HttpPost("authenticate")]
+        public IActionResult Authenticate([FromBody] LoginRequestDto loginRequestDto)
+        {
+            string Name = loginRequestDto.Name;
+            string Password = loginRequestDto.Password;
+            var Customer = _customerService.Authenticate(Name, Password);
+            if (Customer is null)
+            {
+                return NotFound("Invalid email or password");
+            }
+
+            // Instead of returning the full employee entity, you could return a safer response
+            // For example, create a response DTO that does not include sensitive information
+            //var employeeDto = new EmployeeResponseDto
+            //{
+            //    Id = employee.Id,
+            //    Name = employee.Name,
+            //    Email = employee.Email,
+            //    // Add any other non-sensitive fields as needed
+            //};
+
+            return Ok(Customer);
         }
     }
 }

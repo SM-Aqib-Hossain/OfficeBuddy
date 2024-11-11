@@ -15,5 +15,6 @@ namespace BusinessLogicLayer
         Task<Customer> AddCustomerAsync(Customer customer);
         //Task UpdateCustomerAsync(Customer customer);
         Task DeleteCustomerAsync(int id);
+        Task<Customer> Authenticate(string Name, string Password);
     }
 }
