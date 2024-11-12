@@ -79,28 +79,25 @@ namespace WebAPI.Controllers
                 return NotFound(new { message = "Customer not found." });
             }
         }
+        
+
         [HttpPost("authenticate")]
-        public IActionResult Authenticate([FromBody] LoginRequestDto loginRequestDto)
+        public async Task<IActionResult> Authenticate([FromBody] LoginRequestDto loginRequestDto)
         {
             string Name = loginRequestDto.Name;
             string Password = loginRequestDto.Password;
-            var Customer = _customerService.Authenticate(Name, Password);
-            if (Customer is null)
+
+            var customer = await _customerService.Authenticate(Name, Password);
+
+            if (customer == null)
             {
-                return NotFound("Invalid email or password");
+                // Return a more user-friendly message
+                return Unauthorized("Wrong username or password.");
             }
 
-            // Instead of returning the full employee entity, you could return a safer response
-            // For example, create a response DTO that does not include sensitive information
-            //var employeeDto = new EmployeeResponseDto
-            //{
-            //    Id = employee.Id,
-            //    Name = employee.Name,
-            //    Email = employee.Email,
-            //    // Add any other non-sensitive fields as needed
-            //};
-
-            return Ok(Customer);
+            return Ok(customer);
         }
+
+
     }
 }

@@ -59,21 +59,32 @@ namespace DataAccessLayer.Interfaces
                 throw new KeyNotFoundException("Cutomer Not found ");
             }
         }
-        public async Task<Customer> Authenticate(string Name, string Password)
+
+        public async Task<Customer?> Authenticate(string Name, string Password)
         {
             // Simulating authentication by checking the database for matching credentials
             var customer = await _dbContext.Customers
                 .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
 
-            if (customer != null)
-            {
-                return customer;
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("Invalid credentials");
-            }
+            // Return null if authentication fails
+            return customer;
         }
+
+        //public async Task<Customer> Authenticate(string Name, string Password)
+        //{
+        //    // Simulating authentication by checking the database for matching credentials
+        //    var customer = await _dbContext.Customers
+        //        .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
+
+        //    if (customer != null)
+        //    {
+        //        return customer;
+        //    }
+        //    else
+        //    {
+        //        throw new UnauthorizedAccessException("Invalid credentials");
+        //    }
+        //}
 
 
         //public Task UpdateCustomerAsync(Customer customer)
