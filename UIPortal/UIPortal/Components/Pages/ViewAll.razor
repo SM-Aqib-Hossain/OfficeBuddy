@@ -1,0 +1,66 @@
+﻿@page "/view-all"
+
+@using BusinessLogicLayer.Dto
+
+@using System.Net.Http.Json;
+
+@inject NavigationManager Navigation
+@inject HttpClient _httpClient
+
+@rendermode InteractiveServer
+
+@inject IJSRuntime JS
+
+<PageTitle>Home</PageTitle>
+
+<h1>Customer List</h1>
+
+@if (customers == null)
+{
+    <p>Loading...</p>
+}
+else if (!customers.Any())
+{
+    <p>No customers found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">City</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customers)
+            {
+                <tr>
+                    <td scope="row">@customer.Id</td>
+                    <td>@customer.Name</td>
+                    <td>@customer.City</td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<CustomerDto> customers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("Customers");
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine($"Error fetching customers: {ex.Message}");
+        }
+    }
+}

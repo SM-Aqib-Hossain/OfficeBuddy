@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BusinessLogicLayer", "Busin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPI", "WebAPI\WebAPI.csproj", "{1F282295-9868-49AF-9683-9BB9431B0187}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPortal", "UIPortal\UIPortal\UIPortal.csproj", "{EDC88549-5D82-4146-90FD-44F9E47E0E51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UIPortal", "UIPortal\UIPortal\UIPortal.csproj", "{EDC88549-5D82-4146-90FD-44F9E47E0E51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIPortal.Client", "UIPortal\UIPortal.Client\UIPortal.Client.csproj", "{FFB6D241-844D-4700-8DDF-626B8B526EFF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UIPortal.Client", "UIPortal\UIPortal.Client\UIPortal.Client.csproj", "{FFB6D241-844D-4700-8DDF-626B8B526EFF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

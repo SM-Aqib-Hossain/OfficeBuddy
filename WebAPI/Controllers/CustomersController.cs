@@ -82,6 +82,7 @@ namespace WebAPI.Controllers
         
 
         [HttpPost("authenticate")]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Authenticate([FromBody] LoginRequestDto loginRequestDto)
         {
             string Name = loginRequestDto.Name;
