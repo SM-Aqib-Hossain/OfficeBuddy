@@ -1,11 +1,8 @@
 ﻿using BusinessLogicLayer;
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using BusinessLogicLayer.Dto;
 
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
@@ -51,17 +48,14 @@ namespace WebAPI.Controllers
         }
 
         // PUT: api/Customers/{id}
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
-        //{
-        //    if (id != customer.Id)
-        //    {
-        //        return BadRequest("Customer ID mismatch.");
-        //    }
+        [HttpPut("/update/{id}")]
+        public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
+        {
+            
 
-        //    await _customerService.UpdateCustomerAsync(customer);
-        //    return NoContent();
-        //}
+            await _customerService.UpdateCustomerAsync(id, customer);
+            return NoContent();
+        }
 
         // DELETE: api/Customers/{id}
         [HttpDelete("{id}")]
@@ -77,5 +71,26 @@ namespace WebAPI.Controllers
                 return NotFound(new { message = "Customer not found." });
             }
         }
+        
+
+        [HttpPost("authenticate")]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Authenticate([FromBody] LoginRequestDto loginRequestDto)
+        {
+            string Name = loginRequestDto.Name;
+            string Password = loginRequestDto.Password;
+
+            var customer = await _customerService.Authenticate(Name, Password);
+
+            if (customer == null)
+            {
+                // Return a more user-friendly message
+                return Unauthorized("Wrong username or password.");
+            }
+
+            return Ok(customer);
+        }
+
+
     }
 }

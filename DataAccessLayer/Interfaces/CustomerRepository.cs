@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -59,9 +60,48 @@ namespace DataAccessLayer.Interfaces
             }
         }
 
-        //public Task UpdateCustomerAsync(Customer customer)
+        public async Task<Customer?> Authenticate(string Name, string Password)
+        {
+            // Simulating authentication by checking the database for matching credentials
+            var customer = await _dbContext.Customers
+                .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
+
+            // Return null if authentication fails
+            return customer;
+        }
+        public async Task<Customer> UpdateCustomerAsync(int id, Customer customer)
+        {
+            var customerToUpdate = await _dbContext.Customers.FindAsync(id);
+            if (customerToUpdate != null)
+            {
+                customerToUpdate.Name = customer.Name;
+                customerToUpdate.City = customer.City;
+                customerToUpdate.Password = customer.Password;
+                customerToUpdate.Role = customer.Role;
+
+                await _dbContext.SaveChangesAsync();
+                return customerToUpdate; // Return the updated customer
+            }
+            throw new KeyNotFoundException("Customer not found.");
+        }
+
+        //public async Task<Customer> Authenticate(string Name, string Password)
         //{
-        //    throw new NotImplementedException();
+        //    // Simulating authentication by checking the database for matching credentials
+        //    var customer = await _dbContext.Customers
+        //        .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
+
+        //    if (customer != null)
+        //    {
+        //        return customer;
+        //    }
+        //    else
+        //    {
+        //        throw new UnauthorizedAccessException("Invalid credentials");
+        //    }
         //}
+
+
+
     }
 }

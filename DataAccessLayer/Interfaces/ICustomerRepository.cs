@@ -12,7 +12,9 @@ namespace DataAccessLayer.Interfaces
         Task<List<Customer>> GetCustomerAsync();
         Task<Customer> GetCustomerByIdAsync(int id);
         Task<Customer> AddCustomerAsync(Customer customer);
-        //Task UpdateCustomerAsync(Customer customer);
+
+        Task<Customer> UpdateCustomerAsync(int id, Customer customer);
         Task DeleteCustomerAsync(int id);
+        Task<Customer> Authenticate(string Name, string Password);
     }
 }

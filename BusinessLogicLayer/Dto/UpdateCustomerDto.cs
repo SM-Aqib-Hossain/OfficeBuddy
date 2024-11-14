@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccessLayer.Entities
+namespace BusinessLogicLayer.Dto
 {
-    public class Customer
+    public class UpdateCustomerDto
     {
-        public int Id { get; set; }
+        
         public string? Name { get; set; }
         public string? City { get; set; }
         public string? Password { get; set; }

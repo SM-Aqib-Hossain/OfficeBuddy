@@ -43,10 +43,16 @@ namespace BusinessLogicLayer
             return await _customerRepository.GetCustomerByIdAsync(id);
         }
 
-        //public Task UpdateCustomerAsync(Customer customer)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task<Customer> Authenticate(string Name, string Password)
+        {
+            return await _customerRepository.Authenticate(Name, Password);
+        }
+
+        public async Task UpdateCustomerAsync(int id, Customer customer)
+        {
+            await _customerRepository.UpdateCustomerAsync(id, customer);
+        }
+
 
 
     }
