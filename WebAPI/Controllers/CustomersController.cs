@@ -2,12 +2,7 @@
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
 using BusinessLogicLayer.Dto;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers
 {
@@ -53,17 +48,14 @@ namespace WebAPI.Controllers
         }
 
         // PUT: api/Customers/{id}
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
-        //{
-        //    if (id != customer.Id)
-        //    {
-        //        return BadRequest("Customer ID mismatch.");
-        //    }
+        [HttpPut("/update/{id}")]
+        public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
+        {
+            
 
-        //    await _customerService.UpdateCustomerAsync(customer);
-        //    return NoContent();
-        //}
+            await _customerService.UpdateCustomerAsync(id, customer);
+            return NoContent();
+        }
 
         // DELETE: api/Customers/{id}
         [HttpDelete("{id}")]

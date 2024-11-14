@@ -1,15 +1,15 @@
 ﻿@page "/view-all"
 
 @using BusinessLogicLayer.Dto
-
-@using System.Net.Http.Json;
-
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Linq
+@attribute [Authorize(Roles = "Admin")]
 @inject NavigationManager Navigation
 @inject HttpClient _httpClient
+@inject IJSRuntime JS
 
 @rendermode InteractiveServer
-
-@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
 
@@ -25,42 +25,58 @@ else if (!customers.Any())
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Name</th>
-                <th scope="col">City</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var customer in customers)
-            {
-                <tr>
-                    <td scope="row">@customer.Id</td>
-                    <td>@customer.Name</td>
-                    <td>@customer.City</td>
+    <QuickGrid Items="customers" Pagination="state">
+        <PropertyColumn Title="ID" Property="customer => customer.Id" />
+        <PropertyColumn Title="Name" Property="customer => customer.Name" />
+        <PropertyColumn Title="City" Property="customer => customer.City" />
 
-                </tr>
-            }
-        </tbody>
-    </table>
+        <TemplateColumn Title="Action" Context="customer">
+            <a href="@($"/customers/edit?id={customer.Id}")" class="btn btn-primary">Edit</a>
+            <a href="@($"customers/details?id={customer.Id}")" class="btn btn-info">Details</a>
+            <button class="btn btn-danger" @onclick="() => DeleteCustomer(customer.Id)">Delete</button>
+        </TemplateColumn>
+    </QuickGrid>
+    <Paginator State="state" />
 }
 
 @code {
-    private List<CustomerDto> customers;
+    PaginationState state = new PaginationState { ItemsPerPage = 5 };
+    private IQueryable<CustomerDto> customers;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-
-            customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("Customers");
+            // Fetch data from API as List and convert it to IQueryable
+            var customerList = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("Customers");
+            customers = customerList.AsQueryable();
         }
         catch (Exception ex)
         {
-
             Console.WriteLine($"Error fetching customers: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteCustomer(int id)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"Customers/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Remove the deleted customer from the current list
+                customers = customers.Where(c => c.Id != id).AsQueryable();
+                StateHasChanged(); // Re-render the component to reflect changes
+            }
+            else
+            {
+                Console.WriteLine("Error deleting the customer.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting customer: {ex.Message}");
         }
     }
 }

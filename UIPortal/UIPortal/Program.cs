@@ -30,6 +30,10 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddQuickGridEntityFrameworkAdapter();
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 //builder.Services.AddTransient<ICustomerService, CustomerService>(); // Ensure the implementation is correct
 //builder.Services.AddTransient<ICustomerRepository, CustomerRepository>();
 
@@ -50,6 +54,7 @@ else
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseMigrationsEndPoint();
 }
 
 

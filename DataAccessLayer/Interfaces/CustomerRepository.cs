@@ -69,6 +69,21 @@ namespace DataAccessLayer.Interfaces
             // Return null if authentication fails
             return customer;
         }
+        public async Task<Customer> UpdateCustomerAsync(int id, Customer customer)
+        {
+            var customerToUpdate = await _dbContext.Customers.FindAsync(id);
+            if (customerToUpdate != null)
+            {
+                customerToUpdate.Name = customer.Name;
+                customerToUpdate.City = customer.City;
+                customerToUpdate.Password = customer.Password;
+                customerToUpdate.Role = customer.Role;
+
+                await _dbContext.SaveChangesAsync();
+                return customerToUpdate; // Return the updated customer
+            }
+            throw new KeyNotFoundException("Customer not found.");
+        }
 
         //public async Task<Customer> Authenticate(string Name, string Password)
         //{
@@ -87,9 +102,6 @@ namespace DataAccessLayer.Interfaces
         //}
 
 
-        //public Task UpdateCustomerAsync(Customer customer)
-        //{
-        //    throw new NotImplementedException();
-        //}
+
     }
 }

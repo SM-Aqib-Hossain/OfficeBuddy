@@ -1,0 +1,111 @@
+﻿@attribute [StreamRendering]
+
+@page "/customers/create"
+@using Microsoft.EntityFrameworkCore
+@using DataAccessLayer.Entities
+@attribute [Authorize(Roles = "Admin")]
+@inject HttpClient _httpClient
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+
+@if (showSuccessMessage == true)
+{
+    <div class="alert alert-@typeOfAlert" role="alert">
+        @Message
+    </div>
+}
+
+
+<h2>Customer</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Customer" OnValidSubmit="AddCustomer" FormName="create">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="name" class="form-label">Name:</label>
+                <InputText id="name" @bind-Value="Customer.Name" class="form-control" />
+                <ValidationMessage For="() => Customer.Name" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="city" class="form-label">City:</label>
+                <InputText id="city" @bind-Value="Customer.City" class="form-control" />
+                <ValidationMessage For="() => Customer.City" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <InputText id="password" @bind-Value="Customer.Password" class="form-control" />
+                <ValidationMessage For="() => Customer.Password" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="role" class="form-label">Role:</label>
+                <InputText id="role" @bind-Value="Customer.Role" class="form-control" />
+                <ValidationMessage For="() => Customer.Role" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+
+
+
+
+<div>
+    <a href="/customers">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Customer Customer { get; set; } = new();
+
+    private string? typeOfAlert;
+    private string? Message;
+    private bool showSuccessMessage = false;
+
+    private async Task AddCustomer()
+    {
+        try
+        {
+            // Sending POST request to the API
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7011/api/Customers", Customer);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Show a success message
+                typeOfAlert = "success";
+                Message = "Customer added successfully!";
+                showSuccessMessage = true;
+                // Clear any previous errors
+
+                // Clear form fields
+                Customer = new Customer();
+
+                // Trigger UI refresh and wait for 5 seconds
+                StateHasChanged();
+                await Task.Delay(5000);
+
+                // Hide the success message after 5 seconds
+                showSuccessMessage = false;
+                StateHasChanged();
+            }
+            else
+            {
+                typeOfAlert = "danger";
+                Message = "Failed to add the customer. Please try again.";
+                
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that occur during the request
+            Message = $"An error occurred: {ex.Message}";
+            
+        }
+    }
+}
