@@ -1,31 +1,30 @@
 ﻿@page "/login"
-@using BusinessLogicLayer.Dto
+
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
+@using UIPortal.Components.Models
 @inject HttpClient _httpClient
 
 @inject NavigationManager Navigation
 
+<h3 class="text-center">Login</h3>
 
-<h3>Login</h3>
-
-<div class="row">
-    <div class="col-lg-4 offset-lg-4 pt-4 pb-4 border">
+<div class="row justify-content-center">
+    <div class="col-lg-4 pt-4 pb-4 border rounded shadow-sm">
         <EditForm Model="loginRequestDto" OnValidSubmit="Authenticate" FormName="testLoginForm">
             <DataAnnotationsValidator />
 
-            
             <div class="mb-3">
-                <label>Name</label>
-                <InputText @bind-Value="loginRequestDto.Name" class="form-control" placeholder="Name" />
-                <ValidationMessage For="@(() => loginRequestDto.Name)" />
+                <label class="form-label">Name</label>
+                <InputText @bind-Value="loginRequestDto.Name" class="form-control" placeholder="Enter your name" />
+                <ValidationMessage For="@(() => loginRequestDto.Name)" class="text-danger" />
             </div>
 
             <div class="mb-3">
-                <label>Password</label>
-                <InputText @bind-Value="loginRequestDto.Password" placeholder="Password" type="password" class="form-control" />
-                <ValidationMessage For="@(() => loginRequestDto.Password)" />
+                <label class="form-label">Password</label>
+                <InputText @bind-Value="loginRequestDto.Password" placeholder="Enter your password" type="password" class="form-control" />
+                <ValidationMessage For="@(() => loginRequestDto.Password)" class="text-danger" />
             </div>
 
             <div class="mb-3 text-center">
@@ -37,88 +36,33 @@
             </div>
         </EditForm>
     </div>
-    <div class="mb-3 text-center">
-        <span class="text-danger">@errorMessage</span>
-    </div>
 </div>
 
-
 @code {
-
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
-    // 'https:localhost:7011/api/Customers/authenticate'
-    // api/ projonto ase
+
     [SupplyParameterFromForm]
-    public LoginRequestDto loginRequestDto { get; set;  } = new();
+    public LoginRequestDto loginRequestDto { get; set; } = new();
 
     private string? errorMessage;
 
-    // public async Task Authenticate()
-    // {
-
-    //     try
-    //     {
-    //         Sending POST request to the API
-    //         var response = await _httpClient.PostAsJsonAsync("Customers/authenticate", loginRequestDto);
-
-    //         if (response.IsSuccessStatusCode)
-    //         {
-    //             Successfully authenticated, read customer details (if needed)
-    //             var customer = await response.Content.ReadFromJsonAsync<CustomerDto>();
-
-    //             var claims = new List<Claim>
-    //             {
-    //                 new Claim(ClaimTypes.Name, customer.Name),
-    //                 new Claim(ClaimTypes.Role, customer.Role)
-    //             };
-
-    //             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-    //             var principal = new ClaimsPrincipal(identity);
-
-    //             await HttpContext.SignInAsync(principal);
-    //             Console.WriteLine("Login successful.");
-    //             errorMessage = "Login successful.";
-    //             await Task.Delay(500);
-
-    //             StateHasChanged();
-
-    //         }
-    //         else
-    //         {
-
-    //             errorMessage = "Invalid name or password.";
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Handle any other errors
-    //         errorMessage = $"An error occurred: {ex.Message}";
-    //         Console.WriteLine($"Error during authentication: {ex.Message}");
-    //     }
-    // }
-
-    // public void StateHasChanged()
-    // {
-    //     Navigation.NavigateTo("/");
-    // }
     public async Task Authenticate()
     {
         try
         {
-            // Sending POST request to the API
             var response = await _httpClient.PostAsJsonAsync("Customers/authenticate", loginRequestDto);
 
             if (response.IsSuccessStatusCode)
             {
-               
                 var customer = await response.Content.ReadFromJsonAsync<CustomerDto>();
 
                 var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, customer.Name),
-                new Claim(ClaimTypes.Role, customer.Role)
-            };
+                {
+                        new Claim(ClaimTypes.Name, customer.Name),
+                        new Claim(ClaimTypes.Role, customer.Role),
+                        new Claim(ClaimTypes.NameIdentifier, customer.Id.ToString()) 
+                };
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
@@ -127,9 +71,6 @@
                 {
                     await HttpContext.SignInAsync(principal);
                 }
-
-                // Navigate after successful login
-                // await InvokeAsync(() => Navigation.NavigateTo("/"));
             }
             else
             {
@@ -138,12 +79,8 @@
         }
         catch (Exception ex)
         {
-            // Handle any other errors
             errorMessage = $"An error occurred: {ex.Message}";
         }
         Navigation.NavigateTo("/");
     }
-
 }
-
-

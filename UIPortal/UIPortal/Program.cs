@@ -1,10 +1,8 @@
 using UIPortal.Client.Pages;
 using UIPortal.Components;
 
-using BusinessLogicLayer; // Add this namespace
-using DataAccessLayer; // If needed
-using DataAccessLayer.Interfaces;
-using DataAccessLayer.Data;
+
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -27,8 +25,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 //added this
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 

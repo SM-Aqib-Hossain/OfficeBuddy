@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DataAccessLayer.Entities
+﻿namespace UIPortal.Components.Models
 {
-    public class Customer
+    public class CustomerDto
     {
         public int Id { get; set; }
         public string? Name { get; set; }
@@ -16,4 +10,5 @@ namespace DataAccessLayer.Entities
         public string? Role { get; set; }
         public int? Balance { get; set; }
     }
+
 }

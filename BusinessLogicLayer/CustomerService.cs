@@ -52,7 +52,14 @@ namespace BusinessLogicLayer
         {
             await _customerRepository.UpdateCustomerAsync(id, customer);
         }
-
+        public async Task<int?> GetBalanceById(int id)
+        {
+            return await _customerRepository.GetBalanceById(id);
+        }
+        public async Task<Customer> UpdateCustomerBalanceByIdAsync(int id, int newBalance)
+        {
+            return await _customerRepository.UpdateCustomerBalanceByIdAsync(id, newBalance);
+        }
 
 
     }

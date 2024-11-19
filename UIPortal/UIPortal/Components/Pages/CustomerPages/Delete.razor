@@ -1,7 +1,8 @@
 ﻿@attribute [StreamRendering]
 @page "/customers/delete"
 @using Microsoft.EntityFrameworkCore
-@using DataAccessLayer.Entities
+@using UIPortal.Components.Models
+
 @attribute [Authorize(Roles = "Admin")]
 @inject NavigationManager NavigationManager
 @inject HttpClient _httpClient
@@ -43,7 +44,7 @@
 </div>
 
 @code {
-    private Customer? customer;
+    private CustomerDto? customer;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -51,7 +52,7 @@
     protected override async Task OnInitializedAsync()
     {
         
-        customer = await _httpClient.GetFromJsonAsync<Customer>($"Customers/{Id}");
+        customer = await _httpClient.GetFromJsonAsync<CustomerDto>($"Customers/{Id}");
 
         if (customer is null)
         {

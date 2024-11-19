@@ -78,13 +78,36 @@ namespace DataAccessLayer.Interfaces
                 customerToUpdate.City = customer.City;
                 customerToUpdate.Password = customer.Password;
                 customerToUpdate.Role = customer.Role;
+                customerToUpdate.Balance = customer.Balance;
 
                 await _dbContext.SaveChangesAsync();
                 return customerToUpdate; // Return the updated customer
             }
             throw new KeyNotFoundException("Customer not found.");
         }
-
+        public async Task<int?> GetBalanceById(int id)
+        {
+            var customer = await _dbContext.Customers.FindAsync(id);
+            if (customer != null)
+            {
+                return customer.Balance;
+            }
+            else
+            {
+                throw new KeyNotFoundException("Customer not found.");
+            }
+        }
+        public async Task<Customer> UpdateCustomerBalanceByIdAsync(int id, int newBalance)
+        {
+            var customerToUpdate = await _dbContext.Customers.FindAsync(id);
+            if (customerToUpdate != null)
+            {
+                customerToUpdate.Balance = newBalance;
+                await _dbContext.SaveChangesAsync();
+                return customerToUpdate; 
+            }
+            throw new KeyNotFoundException("Customer not found.");
+        }
         //public async Task<Customer> Authenticate(string Name, string Password)
         //{
         //    // Simulating authentication by checking the database for matching credentials

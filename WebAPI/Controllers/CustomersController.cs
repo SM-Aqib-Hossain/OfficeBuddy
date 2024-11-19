@@ -2,6 +2,7 @@
 using DataAccessLayer.Entities;
 using Microsoft.AspNetCore.Mvc;
 using BusinessLogicLayer.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace WebAPI.Controllers
@@ -24,7 +25,7 @@ namespace WebAPI.Controllers
             var customers = await _customerService.GetCustomerAsync();
             return Ok(customers);
         }
-
+        
         // GET: api/Customers/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<Customer>> GetCustomer(int id)
@@ -90,7 +91,26 @@ namespace WebAPI.Controllers
 
             return Ok(customer);
         }
+        [HttpGet("balance/{id}")]
+        public async Task<int?> GetBalanceById(int id)
+        {
+            var balance = await _customerService.GetBalanceById(id);
 
+            // Return null if balance is not found; otherwise, return the balance value.
+            return balance;
+        }
+        [HttpPut("balanceUpdate/{id}")]
+        public async Task<IActionResult> UpdateCustomerBalanceById(int id,int newBalance)
+        {
+            var customer = await _customerService.UpdateCustomerBalanceByIdAsync(id, newBalance);
+
+            if (customer == null)
+            {
+                return NotFound(new { message = "Customer not found." });
+            }
+
+            return Ok(customer);
+        }
 
     }
 }

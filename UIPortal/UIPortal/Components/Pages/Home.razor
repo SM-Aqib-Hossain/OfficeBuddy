@@ -1,11 +1,11 @@
 ﻿@page "/"
 
-@using BusinessLogicLayer.Dto
 
 @using System.Net.Http.Json;
 
 @inject NavigationManager Navigation
 @inject HttpClient _httpClient
+@using System.Security.Claims;
 
 @rendermode InteractiveServer
 
@@ -13,27 +13,80 @@
 
 <PageTitle>Home</PageTitle>
 
-<div class="row">
-    <div class="col-12">
-        <h2 class="fw-bolder"> <span class="text-success">Welcome</span></h2>
-    </div>
+<div class="container mt-5">
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-body">
+                    <AuthorizeView>
+                        <NotAuthorized>
+                            <div class="alert alert-warning text-center" role="alert">
+                                You are not logged in. Please <a class="fw-bolder" href="/login">click here</a> to log in.
+                            </div>
+                        </NotAuthorized>
+                        <Authorized>
+                            <h2 class="fw-bolder text-center">Welcome @userName</h2>
+                            <div class="alert alert-success text-center" role="alert">
+                                Logged in as <b class="fw-bolder">@context.User.Identity.Name  as an @role</b>. <a class="fw-bolder" href="/logout">Click here</a> to log out.
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+                    <AuthorizeView>
+                        <NotAuthorized>
 
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <AuthorizeView>
-                    <NotAuthorized>
-                        <span>You are not logged in. Please <a class="fw-bolder" href="/login">click here</a> to log in.</span>
-                    </NotAuthorized>
-                    <Authorized>
-                        <span>Logged in as <b class="fw-bolder">@context.User.Identity.Name</b>. <a class="fw-bolder" href="/logout">Click here</a>To Logout</span>
-                    </Authorized>
-                </AuthorizeView>
+                        </NotAuthorized>
+                        <Authorized>
+                            <h5 class="fw-bolder text-center">Balance</h5>
+                            <div class="alert alert-success text-center" role="alert">
+                                Your Balance is <b class="fw-bolder">@balance</b>.
+                            </div>
+
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
 
+    private int? identityNum;
+
+    private int balance;
+
+    private string userName;
+    private string role;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (idClaim != null && int.TryParse(idClaim.Value, out int id))
+        {
+            identityNum = id;
+        }
+
+        // balance = await _httpClient.GetFromJsonAsync<int>($"https:localhost:7011/api/Customers/balance/{identityNum}");
+
+        userName = user.Identity.Name; // This gets the user's name
+        var roleClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        role = roleClaim != null ? roleClaim.Value : "No role assigned";
+        if (identityNum != null)
+        {
+            // Fetch the balance using the identityNum
+            try
+            {
+                balance = await _httpClient.GetFromJsonAsync<int>($"https://localhost:7011/api/Customers/balance/{identityNum}");
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle potential HTTP request issues
+                Console.WriteLine($"An error occurred while fetching the balance: {ex.Message}");
+            }
+        }
+    }
 }

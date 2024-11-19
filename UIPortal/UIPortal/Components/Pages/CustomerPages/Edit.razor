@@ -1,15 +1,21 @@
-﻿@page "/customers/edit"
-@using BusinessLogicLayer.Dto
-@using DataAccessLayer.Entities
+﻿@attribute [StreamRendering]
+@page "/customers/edit"
+
+@using UIPortal.Components.Models
+
+
 @using System.Net.Http.Json
-@inject HttpClient HttpClient
+@inject HttpClient _httpClient
 @inject NavigationManager NavigationManager
-@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Admin")]
+
 <PageTitle>Edit Customer</PageTitle>
 
 <h1>Edit Customer</h1>
 
-@if (customer == null)
+<h2>@message</h2>
+
+@if (customer is null)
 {
     <p><em>Loading...</em></p>
 }
@@ -51,7 +57,9 @@ else
 </div>
 
 @code {
-    private UpdateCustomerDto customer;
+    public string message = "";
+    private UpdateCustomerDto? customer;
+
     [SupplyParameterFromQuery]
     public int Id { get; set; }
 
@@ -59,19 +67,18 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
+
+        customer = await _httpClient.GetFromJsonAsync<UpdateCustomerDto>($"Customers/{Id}");
+
+        if (customer != null)
         {
-            customer = await HttpClient.GetFromJsonAsync<UpdateCustomerDto>($"https://localhost:7011/api/Customers/{Id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading customer data: {ex.Message}");
+            message = "Customer found.";
         }
     }
 
     private async Task UpdateCustomer()
     {
-        var response = await HttpClient.PutAsJsonAsync($"https://localhost:7011/api/Customers/update/{Id}", customer);
+        var response = await _httpClient.PutAsJsonAsync($"https://localhost:7011/api/Customers/update/{Id}", customer);
 
         if (response.IsSuccessStatusCode)
         {

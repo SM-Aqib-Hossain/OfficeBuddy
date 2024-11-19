@@ -1,11 +1,11 @@
 ﻿@page "/weather"
 @attribute [StreamRendering]
-
+@using System.Security.Claims;
 <PageTitle>Weather</PageTitle>
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "User")]
 <h1>Weather</h1>
 
-<p>This component demonstrates showing data.</p>
+<p>This component demonstrates showing data. hellow @userName @role</p>
 
 @if (forecasts == null)
 {
@@ -37,10 +37,32 @@ else
 }
 
 @code {
+
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
     private WeatherForecast[]? forecasts;
+    private static string userName;
+    private static string role;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            userName = user.Identity.Name; // This gets the user's name
+            var roleClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+            role = roleClaim != null ? roleClaim.Value : "No role assigned";
+        }
+        else
+        {
+            userName = "Anonymous";
+            role = "No role assigned";
+        }
+
         // Simulate asynchronous loading to demonstrate streaming rendering
         await Task.Delay(500);
 

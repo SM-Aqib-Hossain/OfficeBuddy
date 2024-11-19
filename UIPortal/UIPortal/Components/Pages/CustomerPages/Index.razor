@@ -1,13 +1,11 @@
 ﻿@page "/customers"
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
-@using DataAccessLayer.Entities
-@using DataAccessLayer.Data
+
 @inject HttpClient _httpClient
 @attribute [Authorize(Roles = "Admin")]
 
 
-@using BusinessLogicLayer.Dto
 
 
 @inject NavigationManager Navigation
@@ -20,7 +18,7 @@
     <a href="customers/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="customers">
+<!--<QuickGrid Class="table" Items="customers">
     <PropertyColumn Property="customer => customer.Name" />
     <PropertyColumn Property="customer => customer.City" />
     <PropertyColumn Property="customer => customer.Password" />
@@ -31,17 +29,18 @@
         <a href="@($"customers/details?id={customer.Id}")">Details</a> |
         <a href="@($"customers/delete?id={customer.Id}")">Delete</a>
     </TemplateColumn>
-</QuickGrid>
+</QuickGrid>-->
 
 @code {
-    private ApplicationDbContext context = default!;
+    // private ApplicationDbContext context = default!;
 
-    private IQueryable<CustomerDto> customers;
+    // private IQueryable<CustomerDto> customers;
 
-    protected override async Task OnInitializedAsync()
-    {
-        var customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("Customers");
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     var customerList = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("Customers");
+    //     customers = customerList.AsQueryable();
 
-    }
+    // }
  
 }
