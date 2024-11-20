@@ -4,103 +4,157 @@
     @inject NavigationManager NavigationManager
     @using System.Security.Claims;
     @using Microsoft.JSInterop;
+@using Newtonsoft.Json
+@using UIPortal.Components.Models
     @inject IJSRuntime JS
 
-    <div class="mb-3" id="alocatebalance" style="@((takeBalance) ? "display:block;" : "display:none;")">
-        <h3>Enter the balance you want to give</h3>
-        <input type="number" @bind="alocatedBalance" placeholder="Enter balance..." class="form-control" />
-        <hr />
-        <button class="btn btn-primary" @onclick="() => alterBalance()">Give</button>
-    </div>
-
-    <div class="card text-center">
+<div class="d-flex justify-content-center">
+    <div class="card" style="width: 22rem; @((takeBalance) ? "display:block;" : "display:none;")">
+        <img class="card-img-top" src="..." alt="Card image cap">
         <div class="card-body">
-            <h4>@displayedBalance</h4>
-        </div>
-    </div>
+            <h5 class="card-title">Enter the balance you want to give</h5>
+            <h6 class="card-title">Your Current Balance is: @customerBalance</h6>
+            <!-- <p class="card-text">Enter how much balance you want ton  allocate to play</p>-->
+            <input type="number" @bind="alocatedBalance" placeholder="Enter balance..." class="form-control mt-3" />
 
-    <div class="d-flex justify-content-center">
-        <div class="card text-center" style="width: 18rem;@((takeBalance) ?"display:none;":  "display:block;" ) ">
-            <div class="card-body">
-                <h5 class="card-title">Choices</h5>
-                <h6 class="card-subtitle mb-2 text-muted">@result</h6>
-                <p class="card-text">Choose Head or tail</p>
-            <button style="@((takeBalance) ?"display:none;":  "display:block;" )">Play Again</button>
-                <button class="btn btn-primary" @onclick="() => ChooseOption(1)">Head</button>
-                <button class="btn btn-primary" @onclick="() => ChooseOption(2)">Tail</button>
+            <div class="d-grid gap-2 col-6 mx-auto">
+
+                <button class="bi bi-coin btn btn-primary mt-3" @onclick="() => alterBalance()">Give</button>
             </div>
         </div>
     </div>
 
-    @code {
-        [CascadingParameter]
-        private Task<AuthenticationState> authenticationStateTask { get; set; }
-        private string result;
+</div>
 
-        private bool takeBalance = true;
-        private int alocatedBalance;
-        private int displayedBalance;
-        private int customerBalance;
-        private int winningBalance;
 
-        private int? identityNum;
 
-        [Inject]
-        private IJSRuntime JSRuntime { get; set; }
+    <div class="card text-center" style="@((gameCard) ?"display:block;" : "display:none;" )">
+        <div class="card-body">
+            <h4>Balance: @displayedBalance</h4>  
+        </div>
+    </div>
 
-        protected override async Task OnInitializedAsync()
+    <div class="d-flex justify-content-center">
+    <div class="card text-center" style="width: 18rem;@((gameCard) ?"display:block;" : "display:none;") ">
+            <div class="card-body"
+                <h5 class="card-title">Choices</h5>
+                <h6 class="card-subtitle mb-2 text-muted">@result</h6>
+                
+            <div style="@((showPlayAgainButtun) ?"display:block;" : "display:none;" )">
+                <button class="btn btn-success" @onclick="() => reloadGame()" >
+                Play Again</button>
+                </div>
+                <div style="@((showPlayAgainButtun) ?"display:none;" : "display:block;" )">
+                    <p class="card-text">Choose Head or tail</p>
+                <button class="btn btn-primary" @onclick="() => ChooseOption(1)">Head</button>
+                <button class="btn btn-primary" @onclick="() => ChooseOption(2)">Tail</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private string result;
+
+    private bool takeBalance = true;
+    private bool showPlayAgainButtun = false;
+    private bool gameCard = false;
+    private int alocatedBalance;
+    private int displayedBalance;
+    private int customerBalance;
+    private int winningAmmount;
+
+    private int? identityNum;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (idClaim != null && int.TryParse(idClaim.Value, out int id))
         {
-            var authState = await authenticationStateTask;
-            var user = authState.User;
-            var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
-            {
-                identityNum = id;
-            }
-
-            if (user.Identity.IsAuthenticated)
-            {
-                customerBalance = await _httpClient.GetFromJsonAsync<int>($"https://localhost:7011/api/Customers/balance/{identityNum}");
-            }
+            identityNum = id;
         }
 
-        private async void alterBalance()
+        if (user.Identity.IsAuthenticated)
         {
-            var newBalance = customerBalance - alocatedBalance;
-            if (newBalance < 0)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "This balance cannot be allocated.");
-                NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
-            }
-            else
-            {
-                string apiUrl = $"https://localhost:7011/api/Customers/balanceUpdate/{identityNum}?newBalance={newBalance}";
-                // Send a PUT request with an empty content body
-                var response = await _httpClient.PutAsync(apiUrl, null);
-                if (response.IsSuccessStatusCode)
-                {
-                    takeBalance = false;
-                    displayedBalance = newBalance;
-                }
-                else
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", "Failed to update balance.");
-                }
-            }
-        }
-
-        private void ChooseOption(int option)
-        {
-            var userChoice = option;
-            var computerChoice = new Random().Next(1, 3);
-            if (userChoice == computerChoice)
-            {
-                winningBalance = alocatedBalance * 2;
-                result = $"You won! {winningBalance}";
-            }
-            else
-            {
-                result = "You lost!";
-            }
+            customerBalance = await _httpClient.GetFromJsonAsync<int>($"https://localhost:7011/api/Customers/balance/{identityNum}");
         }
     }
+
+    private async Task alterBalance()
+    {
+        var newBalance = customerBalance - alocatedBalance;
+        if (newBalance < 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "This balance cannot be allocated.");
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        }
+        else
+        {
+            takeBalance = false;
+            gameCard = true;
+            displayedBalance = customerBalance;
+        }
+    }
+
+    private async Task ChooseOption(int option)
+    {
+        var userChoice = option;
+        var computerChoice = new Random().Next(1, 3);
+        if (userChoice == computerChoice)
+        {
+            winningAmmount = alocatedBalance * 2b;
+            result = $"You won! {winningAmmount} this ammount";
+            var winningBalance = winningAmmount + displayedBalance;
+
+            var response = updateBalance(winningBalance);
+            displayedBalance = winningBalance;
+        }
+        else
+        {
+            var newBalance = customerBalance - alocatedBalance;
+            var newBalanceFromApi = await updateBalance(newBalance);
+            displayedBalance = newBalanceFromApi;
+            result = $"You lost! {alocatedBalance} is lost";
+        }
+        showPlayAgainButtun = true;
+    }
+
+    private async Task reloadGame()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private async Task<int> updateBalance(int balance)
+    {
+        string apiUrl = $"https://localhost:7011/api/Customers/balanceUpdate/{identityNum}?newBalance={balance}";
+
+        var httpResponseMessage = await _httpClient.PutAsync(apiUrl, null);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var contentStream = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            var customerInfo = JsonConvert.DeserializeObject<CustomerDto>(contentStream.ToString());
+
+            return customerInfo.Balance;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+
+
+
+
+
+}
+
