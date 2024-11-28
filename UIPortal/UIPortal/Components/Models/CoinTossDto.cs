@@ -1,6 +1,6 @@
-﻿namespace DataAccessLayer.Entities
+﻿namespace UIPortal.Components.Models
 {
-    public class CoinToss 
+    public class CoinTossDto
     {
         public int Id { get; set; }
         public int PlayerId { get; set; }

@@ -16,5 +16,6 @@ namespace DataAccessLayer.Data
 
         }
         public DbSet<Customer > Customers { get; set; }
+        public DbSet<CoinToss> CoinTosses { get; set; }
     }
 }

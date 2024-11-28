@@ -49,7 +49,7 @@ namespace WebAPI.Controllers
         }
 
         // PUT: api/Customers/{id}
-        [HttpPut("/update/{id}")]
+        [HttpPut("/api/update/Customers/{id}")]
         public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
         {
             

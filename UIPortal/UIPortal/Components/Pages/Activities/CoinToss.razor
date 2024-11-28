@@ -1,63 +1,112 @@
-﻿    @page "/activities/coinToss"
-    @rendermode InteractiveServer
-    @inject HttpClient _httpClient
-    @inject NavigationManager NavigationManager
-    @using System.Security.Claims;
-    @using Microsoft.JSInterop;
+﻿@page "/activities/coinToss"
+@rendermode InteractiveServer
+@inject HttpClient _httpClient
+@inject NavigationManager NavigationManager
+@using System.Security.Claims
+@using Microsoft.JSInterop
 @using Newtonsoft.Json
 @using UIPortal.Components.Models
-    @inject IJSRuntime JS
+@using Microsoft.EntityFrameworkCore
+@using System.Text
 
-<div class="d-flex justify-content-center">
-    <div class="card" style="width: 22rem; @((takeBalance) ? "display:block;" : "display:none;")">
-        <img class="card-img-top" src="..." alt="Card image cap">
+@inject IJSRuntime JS
+
+<div class="d-flex justify-content-center mt-5">
+    <div class="card shadow-lg" style="width: 22rem; @((takeBalance) ? "display:block;" : "display:none;")">
+        <img class="card-img-top" src="https://via.placeholder.com/150" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title">Enter the balance you want to give</h5>
             <h6 class="card-title">Your Current Balance is: @customerBalance</h6>
-            <!-- <p class="card-text">Enter how much balance you want ton  allocate to play</p>-->
             <input type="number" @bind="alocatedBalance" placeholder="Enter balance..." class="form-control mt-3" />
 
             <div class="d-grid gap-2 col-6 mx-auto">
-
                 <button class="bi bi-coin btn btn-primary mt-3" @onclick="() => alterBalance()">Give</button>
             </div>
         </div>
     </div>
-
 </div>
 
+<div class="card text-center shadow-lg mt-5" style="@((gameCard) ?"display:block;" : "display:none;" )">
+    <div class="card-body">
+        <h4>Balance: @displayedBalance</h4>  
+    </div>
+</div>
 
-
-    <div class="card text-center" style="@((gameCard) ?"display:block;" : "display:none;" )">
+<div class="d-flex justify-content-center mt-5">
+    <div class="card text-center shadow-lg" style="width: 18rem;@((gameCard) ?"display:block;" : "display:none;") ">
         <div class="card-body">
-            <h4>Balance: @displayedBalance</h4>  
+            <h5 class="card-title">Choices</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@result</h6>
+
+            <div style="@((showPlayAgainButtun) ?"display:block;" : "display:none;" )">
+                <button class="btn btn-success" @onclick="() => reloadGame()">Play Again</button>
+            </div>
+            <div style="@((showPlayAgainButtun) ?"display:none;" : "display:block;" )">
+                <p class="card-text">Choose Head or Tail</p>
+                <button class="btn btn-primary me-2" @onclick="() => ChooseOption(1)">Head</button>
+                <button class="btn btn-primary" @onclick="() => ChooseOption(2)">Tail</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="d-flex justify-content-center">
-    <div class="card text-center" style="width: 18rem;@((gameCard) ?"display:block;" : "display:none;") ">
-            <div class="card-body"
-                <h5 class="card-title">Choices</h5>
-                <h6 class="card-subtitle mb-2 text-muted">@result</h6>
-                
-            <div style="@((showPlayAgainButtun) ?"display:block;" : "display:none;" )">
-                <button class="btn btn-success" @onclick="() => reloadGame()" >
-                Play Again</button>
+<div class="card text-center shadow-lg mt-5 border-0">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Game Statistics</h3>
+    </div>
+    <div class="card-body p-4 bg-light">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="stat-box bg-info text-white p-3 rounded">
+                    <h5>Total Games Played</h5>
+                    <h2 class="fw-bold">@gameTotalCount</h2>
                 </div>
-                <div style="@((showPlayAgainButtun) ?"display:none;" : "display:block;" )">
-                    <p class="card-text">Choose Head or tail</p>
-                <button class="btn btn-primary" @onclick="() => ChooseOption(1)">Head</button>
-                <button class="btn btn-primary" @onclick="() => ChooseOption(2)">Tail</button>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="stat-box bg-warning text-dark p-3 rounded">
+                    <h5>Games Played by You (@identityNum)</h5>
+                    <h2 class="fw-bold">@gameTotalCountById</h2>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="stat-box bg-success text-white p-3 rounded">
+                    <h5>Games Won</h5>
+                    <h2 class="fw-bold">@gameTotalCountByIdIfWin</h2>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="stat-box bg-danger text-white p-3 rounded">
+                    <h5>Winning Probability</h5>
+                    <p class="mb-1">Head: <span class="fw-bold">@GetWinningProbability(1)%</span></p>
+                    <p class="mb-0">Tail: <span class="fw-bold">@GetWinningProbability(2)%</span></p>
                 </div>
             </div>
         </div>
     </div>
+    <div class="card-footer bg-primary text-white">
+        <small>Keep playing to improve your stats!</small>
+    </div>
+</div>
+
+<style>
+    .stat-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
 
 @code {
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
-    private string result;
 
+    private string result;
     private bool takeBalance = true;
     private bool showPlayAgainButtun = false;
     private bool gameCard = false;
@@ -65,8 +114,13 @@
     private int displayedBalance;
     private int customerBalance;
     private int winningAmmount;
-
+    private string userChoiceInString;
     private int? identityNum;
+    private int gameTotalCount;
+    private int gameTotalCountById;
+    private int gameTotalCountByIdIfWin;
+
+    private IQueryable<CoinTossDto> coinToss;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
@@ -85,6 +139,12 @@
         {
             customerBalance = await _httpClient.GetFromJsonAsync<int>($"https://localhost:7011/api/Customers/balance/{identityNum}");
         }
+
+        var coinTossList = await _httpClient.GetFromJsonAsync<List<CoinTossDto>>("https://localhost:7011/api/CoinToss/getAll");
+        coinToss = coinTossList.AsQueryable();
+        gameTotalCount = getGameTotalCount();
+        gameTotalCountById = getgameTotalCountById();
+        gameTotalCountByIdIfWin = getgameTotalCountByIdIfWin();
     }
 
     private async Task alterBalance()
@@ -107,55 +167,91 @@
     {
         var userChoice = option;
         var computerChoice = new Random().Next(1, 3);
+        userChoiceInString = userChoice == 1 ? "Head" : "Tail";
+
         if (userChoice == computerChoice)
         {
             winningAmmount = alocatedBalance * 2;
-            result = $"You won! {winningAmmount} this ammount";
+            result = $"You won! {winningAmmount}";
             var winningBalance = winningAmmount + displayedBalance;
 
-            var response = updateBalance(winningBalance);
-            displayedBalance = winningBalance;
-            //kugrgkueekhkhujasjkdhkjdhkjdhkkajhfksj
+            displayedBalance = await updateBalance(winningBalance);
+            recordCoinTossData(identityNum, userChoiceInString, true);
+
+
         }
         else
         {
             var newBalance = customerBalance - alocatedBalance;
-            var newBalanceFromApi = await updateBalance(newBalance);
-            displayedBalance = newBalanceFromApi;
+            displayedBalance = await updateBalance(newBalance);
             result = $"You lost! {alocatedBalance} is lost";
+
+            recordCoinTossData(identityNum, userChoiceInString, false);
         }
         showPlayAgainButtun = true;
+        var coinTossList = await _httpClient.GetFromJsonAsync<List<CoinTossDto>>("https://localhost:7011/api/CoinToss/getAll");
+        coinToss = coinTossList.AsQueryable();
+        gameTotalCount = getGameTotalCount();
+        gameTotalCountById = getgameTotalCountById();
+        gameTotalCountByIdIfWin = getgameTotalCountByIdIfWin();
+        StateHasChanged();
+    }
+
+    private async Task<int> updateBalance(int balance)
+    {
+        string apiUrl = $"https://localhost:7011/api/Customers/balanceUpdate/{identityNum}?newBalance={balance}";
+        var httpResponseMessage = await _httpClient.PutAsync(apiUrl, null);
+
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            var contentStream = await httpResponseMessage.Content.ReadAsStringAsync();
+            var customerInfo = JsonConvert.DeserializeObject<CustomerDto>(contentStream);
+            return customerInfo.Balance;
+        }
+        return 0;
+    }
+
+    private async Task recordCoinTossData(int? playerId, string playerChoice, bool PlayerWin)
+    {
+        var coinTossData = new
+        {
+            PlayerId = playerId,
+            PlayerChoice = playerChoice,
+            PlayerWin = PlayerWin
+        };
+
+        var jsonContent = JsonConvert.SerializeObject(coinTossData);
+        var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync("https://localhost:7011/api/CoinToss/addCoinToss", httpContent);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Failed to record coin toss data.");
+        }
+    }
+
+    private int getGameTotalCount() => coinToss.Count();
+
+    private int getgameTotalCountById() =>
+        identityNum == null ? 0 : coinToss.Count(ct => ct.PlayerId == identityNum);
+
+    private int getgameTotalCountByIdIfWin() =>
+        identityNum == null ? 0 : coinToss.Count(ct => ct.PlayerId == identityNum && ct.PlayerWin);
+
+    private double GetWinningProbability(int choice)
+    {
+           if (identityNum == null || coinToss == null) return 0;
+
+    string choiceString = choice == 1 ? "Head" : "Tail";
+    int totalGamesWithChoice = coinToss.Count(ct => ct.PlayerId == identityNum && ct.PlayerChoice == choiceString);
+        int winsWithChoice = coinToss.Count(ct => ct.PlayerId == identityNum && ct.PlayerChoice == choiceString && ct.PlayerWin);
+
+        return totalGamesWithChoice == 0 ? 0 : (double)winsWithChoice / totalGamesWithChoice * 100;
     }
 
     private async Task reloadGame()
     {
         NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
     }
-
-    private async Task<int> updateBalance(int balance)
-    {
-        string apiUrl = $"https://localhost:7011/api/Customers/balanceUpdate/{identityNum}?newBalance={balance}";
-
-        var httpResponseMessage = await _httpClient.PutAsync(apiUrl, null);
-
-        if (httpResponseMessage.IsSuccessStatusCode)
-        {
-            var contentStream = await httpResponseMessage.Content.ReadAsStringAsync();
-
-            var customerInfo = JsonConvert.DeserializeObject<CustomerDto>(contentStream.ToString());
-
-            return customerInfo.Balance;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-
-
-
-
-
-
 }
-
