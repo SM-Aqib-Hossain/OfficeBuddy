@@ -21,9 +21,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 
-builder.Services.AddScoped<ICoinTossRepository, CoinTossRepository>();
-builder.Services.AddScoped<ICoinTossService, CoinTossService>();
-
 
 //builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

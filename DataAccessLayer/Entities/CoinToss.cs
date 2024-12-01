@@ -1,11 +1,17 @@
-﻿namespace DataAccessLayer.Entities
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DataAccessLayer.Entities
 {
-    public class CoinToss 
+    internal class CoinToss
     {
         public int Id { get; set; }
-        public int PlayerId { get; set; }
-        public string PlayerChoice { get; set; }
-
-        public bool PlayerWin { get; set; }
+        public string playerId { get; set; }
+        public string playerChoice { get; set; }
+        public string computerResult { get; set; }
+        public bool playerWin { get; set; }
     }
 }
