@@ -51,7 +51,7 @@
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("Customers/authenticate", loginRequestDto);
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7011/api/Employees/authenticate", loginRequestDto);
 
             if (response.IsSuccessStatusCode)
             {

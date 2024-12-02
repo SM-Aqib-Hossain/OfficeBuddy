@@ -6,9 +6,12 @@
         public string? Name { get; set; }
         public string? City { get; set; }
         public string? Password { get; set; }
-
         public string? Role { get; set; }
-        public int Balance { get; set; } = 0;
+        public int? Balance { get; set; }
+
+        // Foreign Key
+        public int DepartmentId { get; set; }
+        public string DepartmentName { get; set; }
     }
 
 }

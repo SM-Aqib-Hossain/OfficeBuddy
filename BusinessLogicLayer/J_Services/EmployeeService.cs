@@ -1,4 +1,5 @@
-﻿using DataAccessLayer.Entities;
+﻿using BusinessLogicLayer.Interfaces;
+using DataAccessLayer.Entities;
 using DataAccessLayer.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BusinessLogicLayer
+namespace BusinessLogicLayer.J_Services
 {
     public class EmployeeService : IEmployeeService
     {
@@ -21,7 +22,7 @@ namespace BusinessLogicLayer
 
         public async Task<List<Employee>> GetEmployeeAsync()
         {
-            return (List<Employee>)await _employeeRepository.GetEmployeeAsync();    
+            return await _employeeRepository.GetEmployeeAsync();
         }
 
 
@@ -35,7 +36,7 @@ namespace BusinessLogicLayer
         {
             await _employeeRepository.DeleteEmployeeAsync(id);
         }
-        
+
 
 
         public async Task<Employee> GetEmployeeByIdAsync(int id)

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BusinessLogicLayer.Dto
 {
-    public class UpdateCustomerDto
+    public class UpdateEmployeeDto
     {
         
         public string? Name { get; set; }

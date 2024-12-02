@@ -1,5 +1,6 @@
 ﻿using DataAccessLayer.Data;
 using DataAccessLayer.Entities;
+using DataAccessLayer.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,34 +9,34 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccessLayer.Interfaces
+namespace DataAccessLayer.J_Repositories
 {
-    public class CustomerRepository : ICustomerRepository
+    public class EmployeeRepository : IEmployeeRepository
     {
-        private readonly ApplicationDbContext _dbContext; 
-        public CustomerRepository(ApplicationDbContext dbContext)
+        private readonly ApplicationDbContext _dbContext;
+        public EmployeeRepository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
 
-        public async Task<List<Employee>> GetCustomerAsync()
+        public async Task<List<Employee>> GetEmployeeAsync()
         {
-            return await _dbContext.Customers.ToListAsync();
+            return await _dbContext.Employees.ToListAsync();
         }
-        public async Task<Employee> AddCustomerAsync(Employee customer)
+        public async Task<Employee> AddEmployeeAsync(Employee employee)
         {
-            _dbContext.Customers.Add(customer);
+            _dbContext.Employees.Add(employee);
             await _dbContext.SaveChangesAsync();
-            return customer;
+            return employee;
         }
 
-        public async Task DeleteCustomerAsync(int id)
+        public async Task DeleteEmployeeAsync(int id)
         {
-            var customer = await _dbContext.Customers.FindAsync(id);
-            if (customer != null)
+            var employee = await _dbContext.Employees.FindAsync(id);
+            if (employee != null)
             {
-                _dbContext.Customers.Remove(customer);
+                _dbContext.Employees.Remove(employee);
                 await _dbContext.SaveChangesAsync();
             }
             else
@@ -46,13 +47,13 @@ namespace DataAccessLayer.Interfaces
 
 
 
-        public async Task<Employee> GetCustomerByIdAsync(int id)
+        public async Task<Employee> GetEmployeeByIdAsync(int id)
         {
-            var customer =  await _dbContext.Customers.FindAsync(id);
+            var employee = await _dbContext.Employees.FindAsync(id);
 
-            if (customer != null)
+            if (employee != null)
             {
-                return customer;
+                return employee;
             }
             else
             {
@@ -63,48 +64,48 @@ namespace DataAccessLayer.Interfaces
         public async Task<Employee?> Authenticate(string Name, string Password)
         {
             // Simulating authentication by checking the database for matching credentials
-            var customer = await _dbContext.Customers
+            var employee = await _dbContext.Employees
                 .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
 
             // Return null if authentication fails
-            return customer;
+            return employee;
         }
-        public async Task<Employee> UpdateCustomerAsync(int id, Employee customer)
+        public async Task<Employee> UpdateEmployeeAsync(int id, Employee employee)
         {
-            var customerToUpdate = await _dbContext.Customers.FindAsync(id);
-            if (customerToUpdate != null)
+            var employeeToUpdate = await _dbContext.Employees.FindAsync(id);
+            if (employeeToUpdate != null)
             {
-                customerToUpdate.Name = customer.Name;
-                customerToUpdate.City = customer.City;
-                customerToUpdate.Password = customer.Password;
-                customerToUpdate.Role = customer.Role;
-                customerToUpdate.Balance = customer.Balance;
+                employeeToUpdate.Name = employee.Name;
+                employeeToUpdate.City = employee.City;
+                employeeToUpdate.Password = employee.Password;
+                employeeToUpdate.Role = employee.Role;
+                employeeToUpdate.Balance = employee.Balance;
 
                 await _dbContext.SaveChangesAsync();
-                return customerToUpdate; // Return the updated customer
+                return employeeToUpdate; // Return the updated customer
             }
-            throw new KeyNotFoundException("Customer not found.");
+            throw new KeyNotFoundException("Emplyee not found.");
         }
         public async Task<int?> GetBalanceById(int id)
         {
-            var customer = await _dbContext.Customers.FindAsync(id);
-            if (customer != null)
+            var employee = await _dbContext.Employees.FindAsync(id);
+            if (employee != null)
             {
-                return customer.Balance;
+                return employee.Balance;
             }
             else
             {
                 throw new KeyNotFoundException("Customer not found.");
             }
         }
-        public async Task<Employee> UpdateCustomerBalanceByIdAsync(int id, int newBalance)
+        public async Task<Employee> UpdateEmployeeBalanceByIdAsync(int id, int newBalance)
         {
-            var customerToUpdate = await _dbContext.Customers.FindAsync(id);
-            if (customerToUpdate != null)
+            var employeeToUpdate = await _dbContext.Employees.FindAsync(id);
+            if (employeeToUpdate != null)
             {
-                customerToUpdate.Balance = newBalance;
+                employeeToUpdate.Balance = newBalance;
                 await _dbContext.SaveChangesAsync();
-                return customerToUpdate; 
+                return employeeToUpdate;
             }
             throw new KeyNotFoundException("Customer not found.");
         }
