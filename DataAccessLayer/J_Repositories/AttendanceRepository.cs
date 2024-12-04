@@ -64,8 +64,7 @@ namespace DataAccessLayer.J_Repositories
             if (existingAttendance != null)
             {
                 existingAttendance.Date = attendance.Date;
-                existingAttendance.EntryTime = attendance.EntryTime;
-                existingAttendance.ExitTime = attendance.ExitTime;
+
                 existingAttendance.Status = attendance.Status;
 
                 await _dbContext.SaveChangesAsync();

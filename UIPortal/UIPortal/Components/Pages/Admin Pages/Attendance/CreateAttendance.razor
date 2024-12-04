@@ -20,7 +20,7 @@
 
 <div class="row">
     <div class="col-md-6 offset-md-3">
-        <EditForm Model="Attendance" OnValidSubmit="AddAttendance">
+        <EditForm Model="Attendance" OnValidSubmit="AddAttendance" FormName="CreateAttendanceForm">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" />
 
@@ -43,18 +43,6 @@
             </div>
 
             <div class="mb-3">
-                <label for="entryTime" class="form-label">Entry Time:</label>
-                <inputTime id="entryTime" @bind="EntryTimeProxy" class="form-control" />
-                <ValidationMessage For="() => Attendance.EntryTime" class="text-danger" />
-            </div>
-
-            <div class="mb-3">
-                <label for="exitTime" class="form-label">Exit Time:</label>
-                <inputTime id="exitTime" @bind="ExitTimeProxy" class="form-control" />
-                <ValidationMessage For="() => Attendance.ExitTime" class="text-danger" />
-            </div>
-
-            <div class="mb-3">
                 <label for="status" class="form-label">Status:</label>
                 <InputSelect id="status" @bind-Value="Attendance.Status" class="form-control">
                     <option value="Present">Present</option>
@@ -63,9 +51,10 @@
                 </InputSelect>
                 <ValidationMessage For="() => Attendance.Status" class="text-danger" />
             </div>
-
+                
             <button type="submit" class="btn btn-primary w-100">Create</button>
         </EditForm>
+
     </div>
 </div>
 
@@ -78,29 +67,29 @@
     //ad;ksjdlaskdj
     private AttendanceDto Attendance { get; set; } = new();
 
-    private string EntryTimeProxy
-    {
-        get => new DateTime(1, 1, 1, Attendance.EntryTime.Hours, Attendance.EntryTime.Minutes, 0).ToString("HH:mm");
-        set
-        {
-            if (DateTime.TryParse(value, out var time))
-            {
-                Attendance.EntryTime = new TimeSpan(time.Hour, time.Minute, 0);
-            }
-        }
-    }
+    // private string EntryTimeProxy
+    // {
+    //     get => new DateTime(1, 1, 1, Attendance.EntryTime.Hours, Attendance.EntryTime.Minutes, 0).ToString("HH:mm");
+    //     set
+    //     {
+    //         if (DateTime.TryParse(value, out var time))
+    //         {
+    //             Attendance.EntryTime = new TimeSpan(time.Hour, time.Minute, 0);
+    //         }
+    //     }
+    // }
 
-    private string ExitTimeProxy
-    {
-        get => new DateTime(1, 1, 1, Attendance.ExitTime.Hours, Attendance.ExitTime.Minutes, 0).ToString("HH:mm");
-        set
-        {
-            if (DateTime.TryParse(value, out var time))
-            {
-                Attendance.ExitTime = new TimeSpan(time.Hour, time.Minute, 0);
-            }
-        }
-    }
+    // private string ExitTimeProxy
+    // {
+    //     get => new DateTime(1, 1, 1, Attendance.ExitTime.Hours, Attendance.ExitTime.Minutes, 0).ToString("HH:mm");
+    //     set
+    //     {
+    //         if (DateTime.TryParse(value, out var time))
+    //         {
+    //             Attendance.ExitTime = new TimeSpan(time.Hour, time.Minute, 0);
+    //         }
+    //     }
+    // }
 
     private string? typeOfAlert;
     private string? Message;
@@ -110,7 +99,7 @@
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("https://dummyapi.com/api/attendances", Attendance);
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7011/api/Attendance/CreateNewAttendance", Attendance);
 
             if (response.IsSuccessStatusCode)
             {

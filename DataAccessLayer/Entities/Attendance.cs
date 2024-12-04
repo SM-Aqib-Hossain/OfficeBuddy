@@ -15,8 +15,7 @@ namespace DataAccessLayer.Entities
         public string EmployeeName { get; set; }
 
         public DateTime Date { get; set; }
-        public TimeSpan EntryTime { get; set; }
-        public TimeSpan ExitTime { get; set; }
+
         public string Status { get; set; } // e.g., Present, Absent, Leave
     }
 }

@@ -1,0 +1,103 @@
+﻿@page "/department/details"
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Linq
+@using UIPortal.Components.Models
+@inject NavigationManager NavigationManager
+@inject HttpClient _httpClient
+<!--RENDER MODDE-->
+@rendermode InteractiveServer
+<!--RENDER MODDE-->
+<h3>Details Department</h3>
+
+<p>Department ID: @Id</p>
+<p>Department Name: @departmenDto?.Name</p>
+<p>Department Location: @departmenDto?.Location</p>
+
+<h4>Employees in this Department:</h4>
+
+@if (filteredEmployees == null)
+{
+    <p>Loading...</p>
+}
+else if (!filteredEmployees.Any())
+{
+    <p>No employees found for this department.</p>
+}
+else
+{
+    <div class="mb-3">
+        <input type="text" @bind="searchTerm" placeholder="Search employees..." class="form-control" @oninput="FilterEmployees" />
+    </div>
+
+    <QuickGrid Items="filteredEmployees" Pagination="paginationState" Class="table table-striped table-hover">
+        <PropertyColumn Title="ID" Property="employee => employee.Id" />
+        <PropertyColumn Title="Name" Property="employee => employee.Name" />
+
+    </QuickGrid>
+    <Paginator State="paginationState" />
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    private DepartmentDto departmenDto;
+    private List<EmployeeDto> employees = new List<EmployeeDto>();
+    private IQueryable<EmployeeDto> employeesQueryable;
+    private IQueryable<EmployeeDto> filteredEmployees;
+
+    private string searchTerm = string.Empty;
+
+    PaginationState paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch department details
+            departmenDto = await _httpClient.GetFromJsonAsync<DepartmentDto>($"https://localhost:7011/GetDepartmentById/{Id}");
+            if (departmenDto is null)
+            {
+                NavigationManager.NavigateTo("notfound");
+                return;
+            }
+
+            // Fetch employees for the department
+            if (departmenDto.EmployeeId != null)
+            {
+                foreach (var employeeId in departmenDto.EmployeeId)
+                {
+                    var employee = await _httpClient.GetFromJsonAsync<EmployeeDto>($"https://localhost:7011/api/Employees/{employeeId}");
+                    if (employee != null)
+                    {
+                        employees.Add(employee);
+                    }
+                }
+            }
+
+            // Convert list to IQueryable for filtering and pagination
+            employeesQueryable = employees.AsQueryable();
+            filteredEmployees = employeesQueryable;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing page: {ex.Message}");
+        }
+    }
+
+    private void FilterEmployees(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredEmployees = employeesQueryable;
+        }
+        else
+        {
+            filteredEmployees = employeesQueryable
+                .Where(emp => emp.Name != null && emp.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+        StateHasChanged();
+    }
+}
