@@ -11,47 +11,9 @@
 
 <h1>Edit Attendance</h1>
 
-<h2>@message</h2>
+<h2>@Id</h2>
 
-@if (attendance is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <EditForm Model="attendance" OnValidSubmit="UpdateAttendance" FormName="editAttendanceForm">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
 
-        <div class="mb-3">
-            <label for="employeeName" class="form-label">Employee Name:</label>
-            <InputText id="employeeName" @bind="attendance.EmployeeName" class="form-control" />
-            <ValidationMessage For="() => attendance.EmployeeName" class="text-danger" />
-        </div>
-        <div class="mb-3">
-            <label for="employeeId" class="form-label">Employee ID:</label>
-            <InputNumber id="employeeId" @bind-Value="attendance.EmployeeId" class="form-control" />
-            <ValidationMessage For="() => attendance.EmployeeId" class="text-danger" />
-        </div>
-        <div class="mb-3">
-            <label for="date" class="form-label">Date:</label>
-            <InputDate id="date" @bind-Value="attendance.Date" class="form-control" />
-            <ValidationMessage For="() => attendance.Date" class="text-danger" />
-        </div>
-        <div class="mb-3">
-            <label for="status" class="form-label">Status:</label>
-            <InputSelect id="status" @bind-Value="attendance.Status" class="form-control">
-                <option value="">Select Status</option>
-                <option value="Present">Present</option>
-                <option value="Absent">Absent</option>
-                <option value="Leave">Leave</option>
-            </InputSelect>
-            <ValidationMessage For="() => attendance.Status" class="text-danger" />
-        </div>
-
-        <button type="submit" class="btn btn-primary">Save</button>
-    </EditForm>
-}
 
 <div>
     <a href="/attendance/view-all">Back to List</a>
@@ -64,31 +26,8 @@ else
     [SupplyParameterFromQuery]
     public int Id { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        attendance = await _httpClient.GetFromJsonAsync<AttendanceDto>($"'https://localhost:7011/api/Attendances/{Id}");
 
-        if (attendance != null)
-        {
-            message = "Attendance record found.";
-        }
-        else
-        {
-            message = "Attendance record not found.";
-        }
-    }
+    
 
-    private async Task UpdateAttendance()
-    {
-        var response = await _httpClient.PutAsJsonAsync($"https://localhost:7011/api/Attendance/UpdateAttendance/{Id}", attendance);
-
-        if (response.IsSuccessStatusCode)
-        {
-            NavigationManager.NavigateTo("/attendance/view-all");
-        }
-        else
-        {
-            Console.WriteLine("Error updating attendance record.");
-        }
-    }
+    
 }

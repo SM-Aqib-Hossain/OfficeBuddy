@@ -83,12 +83,15 @@
 @code {
     [SupplyParameterFromForm]
     private EmployeeDto Employee { get; set; } = new();
+    private EmployeeDto Employee_1;
     private DepartmentDto departmentDto;
     private string? typeOfAlert;
     private string? Message;
     private bool showSuccessMessage = false;
 
+    
     private int deptId;
+    private int empId = 0;
 
     private async Task AddEmployee()
     {
@@ -96,15 +99,26 @@
         {
             // Sending POST request to the API
             var response = await _httpClient.PostAsJsonAsync("https://localhost:7011/AddEmployee", Employee);
-
+            departmentDto = await _httpClient.GetFromJsonAsync<DepartmentDto>($"https://localhost:7011/GetDepartmentById/{Employee.DepartmentId}");
             if (response.IsSuccessStatusCode)
             {
                 deptId = Employee.DepartmentId;
+                var lastEmployeeId = await GetLastEmployeeId();
+                if (lastEmployeeId != null)
+                {
+                    empId = lastEmployeeId.Value; // Assign the ID to empId
+                    Console.WriteLine($"The ID of the last employee is: {empId}");
+                }
+                else
+                {
+                    Console.WriteLine("No employees found.");
+                }
                 // Show a success message
                 typeOfAlert = "success";
                 Message = "Employee added successfully!";
                 showSuccessMessage = true;
 
+                UpdateDepartment(departmentDto, empId, deptId);
                 // Clear form fields
                 Employee = new EmployeeDto();
 
@@ -130,4 +144,51 @@
             showSuccessMessage = true;
         }
     }
+    private async Task UpdateDepartment(DepartmentDto departmentDto, int empId, int deptId)
+    {
+        departmentDto.EmployeeId.Add(empId);
+        departmentDto.EmployeeIdsInput = string.Join(",", empId);
+
+        // Send the updated department object to the API
+        var response = await _httpClient.PutAsJsonAsync($"https://localhost:7011/UpdateDepartment/{deptId}", departmentDto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Optionally, show a success message or update UI
+            Console.WriteLine("Department updated successfully!");
+        }
+        else
+        {
+            // Handle failure response
+            Console.WriteLine("Failed to update the department.");
+        }
+    }
+    private async Task<int?> GetLastEmployeeId()
+    {
+        try
+        {
+            // Fetch the list of employees from the API
+            var employees = await _httpClient.GetFromJsonAsync<List<EmployeeDto>>("https://localhost:7011/GetEmployees");
+
+            // Ensure the list is not null or empty
+            if (employees != null && employees.Any())
+            {
+                // Get the last employee in the list
+                var lastEmployee = employees.Last();
+
+                // Return the ID of the last employee
+                return lastEmployee.Id;
+            }
+
+            // Return null if no employees are found
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that occur during the request
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return null;
+        }
+    }
+
 }
