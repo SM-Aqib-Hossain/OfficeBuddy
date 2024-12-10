@@ -13,7 +13,7 @@
 
 <h1>View Attendance</h1>
 
-@if (FilteredAttendanceRecords != null && FilteredAttendanceRecords.Any())
+@if (toggle==2)
 {
     <table class="table table-bordered">
         <thead>
@@ -33,7 +33,7 @@
         </tbody>
     </table>
 }
-else if (isSearching && FilteredAttendanceRecords == null)
+else if (toggle == 1)
 {
     <p class="text-danger">No attendance records found for the selected month.</p>
 }
@@ -68,7 +68,7 @@ else
     private int SelectedYear = DateTime.Now.Year;
     private bool isSearching = false;
 
-    private bool hasData;
+    private int toggle = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -107,6 +107,14 @@ else
                 .Where(a => a.Date.Month == SelectedMonth && a.Date.Year == SelectedYear)
                 .OrderBy(a => a.Date)
                 .ToList();
+            if (FilteredAttendanceRecords.Count() == 0)
+            {
+                toggle = 1;
+            }
+            else
+            {
+                toggle = 2;
+            }
         }
         else
         {
