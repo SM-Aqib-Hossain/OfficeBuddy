@@ -8,12 +8,11 @@
 
 @rendermode InteractiveServer
 
-
 <PageTitle>View Attendance</PageTitle>
 
 <h1>View Attendance</h1>
 
-@if (toggle==2)
+@if (FilteredAttendanceRecords != null && FilteredAttendanceRecords.Any())
 {
     <table class="table table-bordered">
         <thead>
@@ -33,7 +32,7 @@
         </tbody>
     </table>
 }
-else if (toggle == 1)
+else if (isNoRecordsFound)
 {
     <p class="text-danger">No attendance records found for the selected month.</p>
 }
@@ -66,9 +65,7 @@ else
     private List<AttendanceDto>? FilteredAttendanceRecords; // Data filtered by month/year
     private int SelectedMonth = DateTime.Now.Month;
     private int SelectedYear = DateTime.Now.Year;
-    private bool isSearching = false;
-
-    private int toggle = 0;
+    private bool isNoRecordsFound = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,7 +96,7 @@ else
 
     private void FilterAttendance()
     {
-        isSearching = true;
+        isNoRecordsFound = false;
 
         if (AllAttendanceRecords != null && AllAttendanceRecords.Any())
         {
@@ -107,21 +104,17 @@ else
                 .Where(a => a.Date.Month == SelectedMonth && a.Date.Year == SelectedYear)
                 .OrderBy(a => a.Date)
                 .ToList();
-            if (FilteredAttendanceRecords.Count() == 0)
+
+            if (!FilteredAttendanceRecords.Any()) // If no records are found
             {
-                toggle = 1;
-            }
-            else
-            {
-                toggle = 2;
+                isNoRecordsFound = true;
             }
         }
         else
         {
-            FilteredAttendanceRecords = null; // No data for the month/year
+            FilteredAttendanceRecords = null; // No data available
+            isNoRecordsFound = true;
         }
-
-        isSearching = false;
     }
 
     private async Task<int> GetEmployeeIdFromClaims()
