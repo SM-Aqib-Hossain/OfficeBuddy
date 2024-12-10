@@ -1,0 +1,129 @@
+﻿@page "/user/attendance/view"
+@inject HttpClient _httpClient
+@using System.Security.Claims
+@using UIPortal.Components.Models
+
+@attribute [Authorize(Roles = "User")]
+@attribute [StreamRendering]
+
+@rendermode InteractiveServer
+
+
+<PageTitle>View Attendance</PageTitle>
+
+<h1>View Attendance</h1>
+
+@if (FilteredAttendanceRecords != null && FilteredAttendanceRecords.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in FilteredAttendanceRecords)
+            {
+                <tr>
+                    <td>@record.Date.ToShortDateString()</td>
+                    <td>@record.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (isSearching && FilteredAttendanceRecords == null)
+{
+    <p class="text-danger">No attendance records found for the selected month.</p>
+}
+else
+{
+    <p>Select a month to view your attendance records.</p>
+}
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <label for="month" class="form-label">Select Month:</label>
+        <InputSelect id="month" @bind-Value="SelectedMonth" class="form-control">
+            @foreach (var month in Enumerable.Range(1, 12))
+            {
+                <option value="@month">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+            }
+        </InputSelect>
+
+        <label for="year" class="form-label mt-3">Select Year:</label>
+        <InputNumber id="year" @bind-Value="SelectedYear" class="form-control" />
+
+        <button class="btn btn-primary w-100 mt-3" @onclick="FilterAttendance">Search</button>
+    </div>
+</div>
+
+@code {
+    private List<AttendanceDto>? AllAttendanceRecords; // All data from the API
+    private List<AttendanceDto>? FilteredAttendanceRecords; // Data filtered by month/year
+    private int SelectedMonth = DateTime.Now.Month;
+    private int SelectedYear = DateTime.Now.Year;
+    private bool isSearching = false;
+
+    private bool hasData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllAttendance(); // Load all data on component initialization
+    }
+
+    private async Task LoadAllAttendance()
+    {
+        try
+        {
+            var employeeId = await GetEmployeeIdFromClaims();
+            var response = await _httpClient.GetAsync($"https://localhost:7011/api/Attendances/employee/{employeeId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                AllAttendanceRecords = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>();
+            }
+            else
+            {
+                AllAttendanceRecords = new List<AttendanceDto>(); // Handle no records
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while loading attendance: {ex.Message}");
+        }
+    }
+
+    private void FilterAttendance()
+    {
+        isSearching = true;
+
+        if (AllAttendanceRecords != null && AllAttendanceRecords.Any())
+        {
+            FilteredAttendanceRecords = AllAttendanceRecords
+                .Where(a => a.Date.Month == SelectedMonth && a.Date.Year == SelectedYear)
+                .OrderBy(a => a.Date)
+                .ToList();
+        }
+        else
+        {
+            FilteredAttendanceRecords = null; // No data for the month/year
+        }
+
+        isSearching = false;
+    }
+
+    private async Task<int> GetEmployeeIdFromClaims()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        return idClaim != null ? int.Parse(idClaim.Value) : 0;
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+}
