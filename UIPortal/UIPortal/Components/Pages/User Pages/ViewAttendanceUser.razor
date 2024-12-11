@@ -12,25 +12,67 @@
 
 <h1>View Attendance</h1>
 
-@if (FilteredAttendanceRecords != null && FilteredAttendanceRecords.Any())
+@if (HolidaysCount > 0)
 {
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var record in FilteredAttendanceRecords)
-            {
+    <p class="text-info text-center">This month has <strong>@HolidaysCount</strong> holidays (Fridays and Saturdays).</p>
+    <h3>Month of </h3>
+    <div class="container text-center">
+        <div class="row">
+            <div class="col">
+                <p class="text-success">Present: <strong>@PresentCount</strong></p>
+            </div>
+            <div class="col">
+                <p class="text-danger">Absent: <strong>@AbsentCount</strong></p>
+            </div>
+            <div class="col">
+                <p class="text-warning">Leave: <strong>@LeaveCount</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-success text-center">Productivity: <strong>@ProductivityPercentage%</strong> (Present / Total Workdays)</p>
+}
+
+@if (WeekAttendanceRecords != null && WeekAttendanceRecords.Any())
+{
+    @foreach (var week in WeekAttendanceRecords)
+    {
+        <h3>Week @week.Key</h3>
+        <div class="container text-center">
+            <div class="row">
+                <div class="col">
+                    <p class="text-success">Present: <strong>@week.Value.Count(a => a.Status == "Present")</strong></p>
+                </div>
+                <div class="col">
+                    <p class="text-danger">Absent: <strong>@week.Value.Count(a => a.Status == "Absent")</strong></p>
+                </div>
+                <div class="col">
+                    <p class="text-warning">Leave: <strong>@week.Value.Count(a => a.Status == "Leave")</strong></p>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td>@record.Date.ToShortDateString()</td>
-                    <td>@record.Status</td>
+                    <th>Date</th>
+                    <th>Status</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var record in week.Value)
+                {
+                    <tr class="@(record.Status == "Present" ? "table-success" : record.Status == "Absent" ? "table-danger" : "table-warning")">
+                        <td>@record.Date.ToShortDateString() (@record.Date.ToString("dddd"))</td>
+                        <td>@record.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 }
 else if (isNoRecordsFound)
 {
@@ -66,10 +108,17 @@ else
     private int SelectedMonth = DateTime.Now.Month;
     private int SelectedYear = DateTime.Now.Year;
     private bool isNoRecordsFound = false;
+    private int HolidaysCount = 0;
+    private int PresentCount = 0;
+    private int AbsentCount = 0;
+    private int LeaveCount = 0;
+    private double ProductivityPercentage = 0;
+    private Dictionary<int, List<AttendanceDto>> WeekAttendanceRecords { get; set; } // Grouped by week
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAllAttendance(); // Load all data on component initialization
+        CalculateHolidays(); // Calculate holidays for the current month and year
     }
 
     private async Task LoadAllAttendance()
@@ -100,10 +149,21 @@ else
 
         if (AllAttendanceRecords != null && AllAttendanceRecords.Any())
         {
+            // Filter records by selected month and year
             FilteredAttendanceRecords = AllAttendanceRecords
                 .Where(a => a.Date.Month == SelectedMonth && a.Date.Year == SelectedYear)
                 .OrderBy(a => a.Date)
                 .ToList();
+
+            // Group attendance records by week number
+            var groupedByWeek = FilteredAttendanceRecords
+                .GroupBy(a => GetWeekNumber(a.Date))
+                .ToList();
+
+            // Create a dictionary with week numbers as keys
+            WeekAttendanceRecords = groupedByWeek.ToDictionary(g => g.Key, g => g.ToList());
+
+            CalculateStatistics();
 
             if (!FilteredAttendanceRecords.Any()) // If no records are found
             {
@@ -115,6 +175,33 @@ else
             FilteredAttendanceRecords = null; // No data available
             isNoRecordsFound = true;
         }
+
+        CalculateHolidays(); // Recalculate holidays for the selected month and year
+    }
+
+    private void CalculateHolidays()
+    {
+        HolidaysCount = 0;
+
+        var daysInMonth = DateTime.DaysInMonth(SelectedYear, SelectedMonth);
+        for (int day = 1; day <= daysInMonth; day++)
+        {
+            var currentDay = new DateTime(SelectedYear, SelectedMonth, day);
+            if (currentDay.DayOfWeek == DayOfWeek.Friday || currentDay.DayOfWeek == DayOfWeek.Saturday)
+            {
+                HolidaysCount++;
+            }
+        }
+    }
+
+    private void CalculateStatistics()
+    {
+        PresentCount = FilteredAttendanceRecords.Count(a => a.Status == "Present");
+        AbsentCount = FilteredAttendanceRecords.Count(a => a.Status == "Absent");
+        LeaveCount = FilteredAttendanceRecords.Count(a => a.Status == "Leave");
+
+        var totalWorkDays = FilteredAttendanceRecords.Count;
+        ProductivityPercentage = totalWorkDays > 0 ? (double)PresentCount / totalWorkDays * 100 : 0;
     }
 
     private async Task<int> GetEmployeeIdFromClaims()
@@ -127,4 +214,11 @@ else
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int GetWeekNumber(DateTime date)
+    {
+        var firstDayOfMonth = new DateTime(date.Year, date.Month, 1);
+        var daysDifference = (date.Day - 1) + (int)firstDayOfMonth.DayOfWeek;
+        return daysDifference / 7 + 1;
+    }
 }

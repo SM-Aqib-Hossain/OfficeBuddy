@@ -44,6 +44,8 @@
         <PropertyColumn Title="Employee Name" Property="record => record.EmployeeName" Sortable="true" Class="col-2" />
         <PropertyColumn Title="Employee ID" Property="record => record.EmployeeId" Sortable="true" Class="col-2" />
         <PropertyColumn Title="Date" Property="record => record.Date.ToShortDateString()" Sortable="true" Class="col-2" />
+
+
         <PropertyColumn Title="Status" Property="record => record.Status" Sortable="true" Class="col-2" />
 
         <TemplateColumn Title="Action" Context="record">
@@ -56,7 +58,7 @@
     }
 
 @code {
-    PaginationState state = new PaginationState { ItemsPerPage = 5 };
+    PaginationState state = new PaginationState { ItemsPerPage = 30 };
     private IQueryable<AttendanceDto> attendanceRecords;
     private IQueryable<AttendanceDto> filteredAttendance;
 
