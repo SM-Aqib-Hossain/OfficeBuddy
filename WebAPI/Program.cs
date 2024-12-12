@@ -29,6 +29,9 @@ builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
+builder.Services.AddScoped<ILeaveTrackerRepository, LeaveTrackerRepository>();
+builder.Services.AddScoped<ILeaveTrackerService, LeaveTrackerService>();
+
 
 //builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

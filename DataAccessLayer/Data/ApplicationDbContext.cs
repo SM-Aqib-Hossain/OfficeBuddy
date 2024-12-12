@@ -19,5 +19,6 @@ namespace DataAccessLayer.Data
 
         public DbSet<Department> Departments { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<LeaveTracker> LeaveTrackers { get; set; }  
     }
 }
