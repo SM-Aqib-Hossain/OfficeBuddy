@@ -134,22 +134,22 @@
         try
         {
             // Step 1: Check if attendance already exists for the given date
-            // var response = await _httpClient.GetAsync($"https:localhost:7011/api/Attendances/employee/{Attendance.EmployeeId}");
-            // if (response.IsSuccessStatusCode)
-            // {
-            //     var existingRecords = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>();
-            //     if (existingRecords != null && existingRecords.Any(record => record.Date.Date == Attendance.Date.Date))
-            //     {
-            //         typeOfAlert = "warning";
-            //         Message = "Attendance for the selected date is already submitted.";
-            //         showSuccessMessage = true;
-            //         StateHasChanged();
-            //         await Task.Delay(3000);
-            //         showSuccessMessage = false;
-            //         StateHasChanged();
-            //         return; Exit without submitting
-            //     }
-            // }
+            var response = await _httpClient.GetAsync($"https://localhost:7011/api/Attendances/employee/{Attendance.EmployeeId}");
+        if (response.IsSuccessStatusCode)
+            {
+                var existingRecords = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>();
+                if (existingRecords != null && existingRecords.Any(record => record.Date.Date == Attendance.Date.Date))
+                {
+                    typeOfAlert = "warning";
+                    Message = "Attendance for the selected date is already submitted.";
+                    showSuccessMessage = true;
+                    StateHasChanged();
+                    await Task.Delay(3000);
+                    showSuccessMessage = false;
+                    StateHasChanged();
+                    return; //Exit without submitting
+                }
+            }
 
             // Step 2: Submit new attendance
 

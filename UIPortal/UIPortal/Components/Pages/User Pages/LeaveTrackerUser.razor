@@ -1,105 +1,48 @@
-﻿@page "/user/attendance/viewbyYear"
+﻿﻿@page "/leave-tracker"
 @using UIPortal.Components.Models
 
 @inject HttpClient _httpClient
 @using System.Security.Claims
-@attribute [Authorize(Roles = "User")]
-@attribute [StreamRendering]
 
-@rendermode InteractiveServer
+<h3>Leave Tracker for @Employee.Name</h3>
 
-<h3>Leave Tracker for @Employee?.Name</h3>
-
-@if (Employee?.JoiningDate != null)
-{
-    <div>
-        <label for="yearSelect">Select Year:</label>
-        <select id="yearSelect" @onchange="OnYearChange">
-            @foreach (var year in years)
-            {
-                if (year >= Employee.JoiningDate.Year)
-                {
-                    <option value="@year" selected="@((year == selectedYear) ? "selected" : null)">
-                        @year
-                    </option>
-                }
-            }
-        </select>
-    </div>
-
-}
-
-<table class="table mt-3">
+<table class="table">
     <thead>
         <tr>
             <th>Month</th>
-            <th class="table-primary">Workdays</th>
-            <th class="table-success">Days Present</th>
-            <th class="table-danger" >Days Absent</th>
-            <th class="table-warning" >Leave Days</th>
+            <th>Days Present</th>
+            <th>Sick Leave Used</th>
+            <th>Casual Leave Used</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var month in months)
         {
-            if (IsMonthEligibleForDisplay(month))
-            {
-                <tr>
-                    <td class="font-weight-bold">@month</td>
-                    <td class ="table-primary">@GetWorkdays(month, selectedYear)</td>
-                    <td class ="table-success">@GetDaysPresent(month)</td>
-                    <td class="table-danger">@GetDaysAbsent(month)</td>
-                    <td class="table-warning" >@GetLeaveDays(month)</td>
-                </tr>
-            }
+            <tr>
+                <td>@month</td>
+                <td>@GetDaysPresent(month)</td>
+                <td>@GetSickLeaveUsed(month)</td>
+                <td>@GetCasualLeaveUsed(month)</td>
+            </tr>
         }
     </tbody>
 </table>
 
+<p><strong>Remaining Casual Leave:</strong> CasualLeaveBalance</p>
+<p><strong>Remaining Sick Leave:</strong> SickLeaveBalance</p>
+
 @code {
     private EmployeeDto? Employee;
-    private List<LeaveTrackerDto>? AllLeaveTrackerData;
-    private List<LeaveTrackerDto>? FilteredLeaveTrackerData;
-    private List<AttendanceDto>? AttendanceData;
-    private int selectedYear = DateTime.Now.Year;
-    private List<int> years = Enumerable.Range(2000, DateTime.Now.Year - 1999).ToList();
-    private List<string> months = new List<string>
-    {
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    };
+    private LeaveTrackerDto LeaveTracker { get; set; }
+    private List<LeaveTrackerDto>? LeaveTrackerList;
 
+
+
+    private List<string> months = new List<string> { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+
+    private int CasualLeaveBalance = 0;
+    private int SickLeaveBalance = 0;
     protected override async Task OnInitializedAsync()
-    {
-        await LoadEmployeeData();
-        await LoadAllLeaveData();
-        await LoadAttendanceData();
-        FilterLeaveDataByYear(selectedYear);
-    }
-
-    private async Task LoadEmployeeData()
-    {
-        try
-        {
-            var employeeId = await GetEmployeeIdFromClaims();
-            var response = await _httpClient.GetAsync($"https://localhost:7011/api/Employees/{employeeId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                Employee = await response.Content.ReadFromJsonAsync<EmployeeDto>();
-            }
-            else
-            {
-                Employee = null; // Handle no employee data
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while loading employee data: {ex.Message}");
-        }
-    }
-
-    private async Task LoadAllLeaveData()
     {
         try
         {
@@ -108,46 +51,23 @@
 
             if (response.IsSuccessStatusCode)
             {
-                AllLeaveTrackerData = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>() ?? new List<LeaveTrackerDto>();
+                LeaveTrackerList = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
             }
             else
             {
-                AllLeaveTrackerData = new List<LeaveTrackerDto>(); // Handle no records
+                LeaveTrackerList = new List<LeaveTrackerDto>(); // Handle no records
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred while loading leave data: {ex.Message}");
+            Console.WriteLine($"An error occurred while loading attendance: {ex.Message}");
         }
-    }
 
-    private async Task LoadAttendanceData()
-    {
-        try
-        {
-            var employeeId = await GetEmployeeIdFromClaims();
-            var response = await _httpClient.GetAsync($"https://localhost:7011/api/Attendances/employee/{employeeId}");
 
-            if (response.IsSuccessStatusCode)
-            {
-                AttendanceData = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>() ?? new List<AttendanceDto>();
-            }
-            else
-            {
-                AttendanceData = new List<AttendanceDto>(); // Handle no records
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while loading attendance data: {ex.Message}");
-        }
-    }
 
-    private void FilterLeaveDataByYear(int year)
-    {
-        FilteredLeaveTrackerData = AllLeaveTrackerData?
-            .Where(leave => leave.LeaveDate.Year == year && leave.LeaveDate >= Employee?.JoiningDate)
-            .ToList();
+        CasualLeaveBalance = 10 - LeaveTrackerList.Count(leave => leave.LeaveType == "Sick");
+        SickLeaveBalance = 14 - LeaveTrackerList.Count(leave => leave.LeaveType == "Casual");
+
     }
 
     private async Task<int> GetEmployeeIdFromClaims()
@@ -157,59 +77,34 @@
         var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         return idClaim != null ? int.Parse(idClaim.Value) : 0;
     }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
 
-    private void OnYearChange(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value.ToString(), out var year))
-        {
-            selectedYear = year;
-            FilterLeaveDataByYear(selectedYear);
-        }
-    }
 
-    private int GetWorkdays(string month, int year)
-    {
-        int monthNumber = months.IndexOf(month) + 1;
-        var daysInMonth = DateTime.DaysInMonth(year, monthNumber);
 
-        return Enumerable.Range(1, daysInMonth)
-            .Select(day => new DateTime(year, monthNumber, day))
-            .Count(date => date.DayOfWeek != DayOfWeek.Friday && date.DayOfWeek != DayOfWeek.Saturday);
-    }
+
+
 
     private int GetDaysPresent(string month)
     {
-        if (AttendanceData == null) return 0;
-        int monthNumber = months.IndexOf(month) + 1;
 
-        return AttendanceData
-            .Count(attendance => attendance.Date.Year == selectedYear && attendance.Date.Month == monthNumber && attendance.Status == "Present");
     }
 
-    private int GetDaysAbsent(string month)
+    private int GetSickLeaveUsed(string month)
     {
         int monthNumber = months.IndexOf(month) + 1;
-        var totalWorkdays = GetWorkdays(month, selectedYear);
-        var presentDays = GetDaysPresent(month);
-        var leaveDays = GetLeaveDays(month);
-
-        return totalWorkdays - (presentDays + leaveDays);
+        // Logic to calculate sick leave used in the month
+        return LeaveTrackerList
+            .Count(leave => leave.LeaveType == "Sick" && leave.LeaveDate.Month == monthNumber);
+        
     }
 
-    private int GetLeaveDays(string month)
+    private int GetCasualLeaveUsed(string month)
     {
         int monthNumber = months.IndexOf(month) + 1;
-        return FilteredLeaveTrackerData?
-            .Count(leave => leave.LeaveDate.Year == selectedYear && leave.LeaveDate.Month == monthNumber && leave.LeaveType == "Sick") ?? 0;
-    }
+        // Logic to calculate sick leave used in the month
+        return LeaveTrackerList
+            .Count(leave => leave.LeaveType == "Sick" && leave.LeaveDate.Month == monthNumber);
 
-    private bool IsMonthEligibleForDisplay(string month)
-    {
-        if (Employee?.JoiningDate == null) return true;
-        int monthNumber = months.IndexOf(month) + 1;
-        return selectedYear > Employee.JoiningDate.Year || (selectedYear == Employee.JoiningDate.Year && monthNumber >= Employee.JoiningDate.Month);
     }
-
-    [CascadingParameter]
-    private Task<AuthenticationState> authenticationStateTask { get; set; }
 }
