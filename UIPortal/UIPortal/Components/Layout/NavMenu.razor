@@ -160,8 +160,18 @@
         <AuthorizeView Roles="User">
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/user/attendance/view">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> View Attendence
+                    <NavLink class="nav-link" href="/user/attendance/viewbyMonth">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Monthly Attendence
+                    </NavLink>
+                </div>
+            </Authorized>
+
+        </AuthorizeView>
+        <AuthorizeView Roles="User">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/user/attendance/viewbyYear">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Yearly Attendence
                     </NavLink>
                 </div>
             </Authorized>
