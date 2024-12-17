@@ -1,0 +1,298 @@
+﻿@page "/user/attendance/viewbyYear"
+
+@using System.Security.Claims
+@using UIPortal.Components.Models
+@inject HttpClient _httpClient
+@attribute [Authorize(Roles = "User")]
+@attribute [StreamRendering]
+
+@rendermode InteractiveServer
+
+<h3>Attendance Record</h3>
+
+<!-- Employee Info Section -->
+@if (employee != null)
+{
+    <div>
+        <p><strong>Employee:</strong> @employee.Name</p>
+        <p><strong>Joining Date:</strong> @employee.JoiningDate.ToString("MMMM dd  yyyy")</p>
+    </div>
+
+    <!-- Year Selection Dropdown -->
+    <div class="form-group">
+        <label for="yearSelect">Select Year:</label>
+        <select class="form-control" id="yearSelect" @bind="selectedYear" @bind:event="onhange" @onchange="OnYearChanged">
+            <option value="">-- Select Year --</option>
+            @for (int year = employee.JoiningDate.Year; year <= DateTime.Now.Year; year++)
+            {
+                <option value="@year">@year</option>
+            }
+        </select>
+    </div>
+
+
+    <!-- Attendance Table -->
+    @if (monthlyAttendance != null && monthlyAttendance.Any())
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Working Days</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Leave</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var record in monthlyAttendance)
+                {
+                    <tr>
+                        <td>@record.MonthName</td>
+                        <td>@getWorkingDays(record.MonthName, selectedYear)</td>
+                        <td>@record.PresentCount</td>
+                        <td>@record.AbsentCount</td>
+                        <td>@record.LeaveCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Total Counts -->
+        <div>
+            <p><strong>Total Present:</strong> @totalPresent</p>
+            <p><strong>Total Absent:</strong> @totalAbsent</p>
+            <p><strong>Total Leave:</strong> @totalLeave</p>
+            <p><strong>Sick Leave for Year:</strong> @sickLeaveAvailiableYearly</p>
+            <p><strong>Casual Leave for Year:</strong> @casualLeaveAvailiableYearly</p>
+            <p><strong>Sick Leave Remaining:</strong> @sickLeaveAvailiable</p>
+            <p><strong>Casual Leave Remaining:</strong> @casualLeaveAvailiable</p>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <p>Loading attendance data...</p>
+    }
+    else if (!string.IsNullOrEmpty(selectedYear))
+    {
+        <p>No attendance data available for the selected year.</p>
+    }
+}
+else if (isLoading)
+{
+    <p>Loading employee data...</p>
+}
+else
+{
+    <p>Employee not found!</p>
+}
+
+@code {
+    [Parameter] public int EmployeeId { get; set; }
+
+    private EmployeeDto employee; // Employee details
+    private Dictionary<int, List<AttendanceDto>> attendanceDataByYear = new(); // Dictionary to store attendance data
+    private List<MonthlyAttendance> monthlyAttendance; // Monthly grouped attendance
+    private string selectedYear; // User-selected year
+    private bool isLoading = true;
+
+    private int totalPresent = 0;
+    private int totalAbsent = 0;
+    private int totalLeave = 0;
+
+    private int casualLeaveAvailiableYearly = 0;
+    private int casualLeaveUsed = 0;
+    private int sickLeaveAvailiableYearly = 0;
+    private int sickLeaveUsed = 0;
+
+    private int casualLeaveAvailiable = 0;
+    private int sickLeaveAvailiable = 0;
+
+    private int allotedSickLeaveYearly = 14;
+    private int allotedCasualLeaveYearly = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployeeData();
+        await LeaveRemainderCounter();
+
+    }
+
+    private int getWorkingDays(string monthName, string year)
+    {
+        // Parse the year and month
+        int parsedYear = int.Parse(year);
+        int month = DateTime.ParseExact(monthName, "MMMM", System.Globalization.CultureInfo.InvariantCulture).Month;
+
+        // Get the first and last day of the month
+        DateTime monthStart = new DateTime(parsedYear, month, 1);
+        DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+        // Calculate the working days excluding Fridays and Saturdays
+        int workingDays = 0;
+
+        for (DateTime day = monthStart; day <= monthEnd; day = day.AddDays(1))
+        {
+            if (day.DayOfWeek != DayOfWeek.Friday && day.DayOfWeek != DayOfWeek.Saturday)
+            {
+                workingDays++;
+            }
+        }
+
+        return workingDays;
+    }
+
+
+    private async Task LeaveRemainderCounter()
+    {
+        if (employee.JoiningDate.Year.ToString() == selectedYear)
+        {
+            DateTime joiningDate = employee.JoiningDate;
+            int year = int.Parse(selectedYear);
+            DateTime endDate = new DateTime(year, 12, 31);
+            int monthsLeft = (endDate.Year - joiningDate.Year) * 12 + endDate.Month - joiningDate.Month + 1;
+
+            int monthsForFullYear = (int)Math.Ceiling((double)monthsLeft / 12);
+            casualLeaveAvailiableYearly = (int)Math.Ceiling(((double)monthsLeft / 12) * allotedCasualLeaveYearly);
+            sickLeaveAvailiableYearly = (int)Math.Ceiling(((double)monthsLeft / 12) * allotedSickLeaveYearly);
+
+            casualLeaveUsed = totalAbsent;
+            sickLeaveUsed = totalLeave;
+
+            casualLeaveAvailiable = casualLeaveAvailiableYearly - casualLeaveUsed;
+            sickLeaveAvailiable = sickLeaveAvailiableYearly - sickLeaveUsed;
+
+        }
+        else
+        {
+            casualLeaveAvailiableYearly = allotedCasualLeaveYearly;
+            sickLeaveAvailiableYearly = allotedSickLeaveYearly;
+
+            casualLeaveUsed = totalAbsent;
+            sickLeaveUsed = totalLeave;
+
+            casualLeaveAvailiable = casualLeaveAvailiableYearly - casualLeaveUsed;
+            sickLeaveAvailiable = sickLeaveAvailiableYearly - sickLeaveUsed;
+        }
+
+
+    }
+
+    // Load Employee Details
+    private async Task LoadEmployeeData()
+    {
+        isLoading = true;
+        var employeeId = await GetEmployeeIdFromClaims();
+
+        try
+        {
+            employee = await _httpClient.GetFromJsonAsync<EmployeeDto>($"https://localhost:7011/api/Employees/{employeeId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading employee: " + ex.Message);
+        }
+
+        isLoading = false;
+    }
+
+    // Handle Year Change
+    private async Task OnYearChanged(ChangeEventArgs e)
+    {
+        selectedYear = e.Value.ToString();
+        await LoadAttendanceData();
+        await LeaveRemainderCounter();
+    }
+
+    // Load Attendance Data for the Selected Year
+    private async Task LoadAttendanceData()
+    {
+        if (string.IsNullOrEmpty(selectedYear) || employee == null)
+            return;
+
+        isLoading = true;
+        try
+        {
+            var year = int.Parse(selectedYear);
+            if (!attendanceDataByYear.ContainsKey(year))
+            {
+                // Load attendance data for the current year if not already in the dictionary
+                var employeeId = await GetEmployeeIdFromClaims();
+                var response = await _httpClient.GetAsync($"https://localhost:7011/api/Attendances/employee/{employeeId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var records = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>();
+
+                    // Filter records by year
+                    DateTime startDate = (year == employee.JoiningDate.Year)
+                        ? employee.JoiningDate
+                        : new DateTime(year, 1, 1);
+                    DateTime endDate = new DateTime(year, 12, 31);
+
+                    var filteredRecords = records
+                        .Where(a => a.Date >= startDate && a.Date <= endDate)
+                        .ToList();
+
+                    attendanceDataByYear[year] = filteredRecords;
+                }
+                else
+                {
+                    attendanceDataByYear[year] = new List<AttendanceDto>();
+                }
+            }
+
+            // Process data for display
+            var yearData = attendanceDataByYear[year];
+
+            monthlyAttendance = yearData
+                .GroupBy(a => a.Date.Month)
+                .Select(g => new MonthlyAttendance
+                    {
+                        MonthName = new DateTime(1, g.Key, 1).ToString("MMMM"),
+                        PresentCount = g.Count(a => a.Status == "Present"),
+                        AbsentCount = g.Count(a => a.Status == "Absent"),
+                        LeaveCount = g.Count(a => a.Status == "Leave")
+                    })
+                .ToList();
+
+            // Calculate Totals
+            totalPresent = monthlyAttendance.Sum(m => m.PresentCount);
+            totalAbsent = monthlyAttendance.Sum(m => m.AbsentCount);
+            totalLeave = monthlyAttendance.Sum(m => m.LeaveCount);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while loading attendance: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    private async Task<int> GetEmployeeIdFromClaims()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        return idClaim != null ? int.Parse(idClaim.Value) : 0;
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    // Helper Class for Monthly Attendance
+    public class MonthlyAttendance
+    {
+        public string MonthName { get; set; }
+        public int PresentCount { get; set; }
+        public int AbsentCount { get; set; }
+        public int LeaveCount { get; set; }
+
+    }
+}
+
+
+
+
+
+
