@@ -22,5 +22,6 @@ namespace BusinessLogicLayer.Interfaces
         Task<List<LeaveTracker>> GetPendingLeaves();
         Task<List<LeaveTracker>> GetSickLeaves();
         Task<List<LeaveTracker>> GetCasualLeaves();
+        Task<LeaveTracker> ToggleStatus(int id, string status, DateTime datetime);
     }
 }

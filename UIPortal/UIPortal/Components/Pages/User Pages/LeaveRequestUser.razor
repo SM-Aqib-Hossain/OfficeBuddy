@@ -1,53 +1,282 @@
-﻿    @page "/user/leave/leaverequest"
+﻿@page "/user/leave/leaverequest"
 
-    @using System.Security.Claims
-    @using UIPortal.Components.Models
-    @inject HttpClient _httpClient
-    @attribute [Authorize(Roles = "User")]
-    @attribute [StreamRendering]
+@inject HttpClient _httpClient
+@using System.Security.Claims
+@using UIPortal.Components.Models
 
-    @rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "User")]
+<PageTitle>Submit Attendance</PageTitle>
 
-<form>
-    <div class="row">
-        <div class="col-sm">
-            <input type="text" class="form-control" placeholder="First name">
-        </div>
-        <div class="col-sm  pt-2 pt-md-0">
-            <input type="text" class="form-control" placeholder="Last name">
-        </div>
+<h1>Submit Attendance</h1>
+
+@if (showSuccessMessage)
+{
+    <div class="alert alert-@typeOfAlert" role="alert">
+        @Message
     </div>
-</form>
-<div class="grid gap-3">
-    <div class="p-2 g-col-6">Grid item 1</div>
-    <div class="p-2 g-col-6">Grid item 2</div>
-    <div class="p-2 g-col-6">Grid item 3</div>
-    <div class="p-2 g-col-6">Grid item 4</div>
-</div>
+}
+<hr />
 <div class="container text-center">
-    <div class="row gx-100">
-        <div class="col-6">
-            <div class="p-3">
-                    <input type="text" class="form-control" placeholder="First name">
+    <div class="row">
+        <div class="col-sm-8">
+            <!--Card-->
+            <div class="card">
+                <h5 class="card-header">Leave Request</h5>
+                <div class="card-body">
+                    <EditForm Model="leaveRequest" OnValidSubmit="SubmitLeaveRequest" FormName="SubmitLeaveRequestForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" />
+
+                        <div class="row pt-2">
+                            <div class="col-sm">
+                                <label for="LeaveType" class="form-label">Select Type of Leave</label>
+                                <InputSelect id="LeaveType" class="form-control" @bind-Value="leaveRequest.LeaveType" required>
+                                    <option value="" disabled>Select Leave Type</option>
+                                    <option value="Sick">Sick Leave</option>
+                                    <option value="Casual">Casual Leave</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => leaveRequest.LeaveType" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-sm">
+                                <label for="LeaveDate" class="form-label">Select the date to start Leave (mm/dd/yyy)</label>
+                                <InputDate id="LeaveDate " class="form-control" @bind-Value="leaveRequest.LeaveDate " required />
+                                <ValidationMessage For="() => leaveRequest.LeaveDate" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-sm">
+                                <label for="DaysRequested" class="form-label">Days Requested incliuding the start of leave day (max 3 min 1)</label>
+                                <InputNumber id="DaysRequested"
+                                             class="form-control"
+                                             @bind-Value="leaveRequest.DaysRequested"
+                                             min="1"
+                                             max="3"
+                                             required />
+                                <ValidationMessage For="() => leaveRequest.DaysRequested" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-sm">
+                                <label for="reason" class="form-label">Please provide reason for leave.</label>
+                                <InputTextArea id="reason"
+                                               class="form-control"
+                                               @bind-Value="leaveRequest.Reason"
+                                               rows="3"
+                                               placeholder="Reason" />
+                                <ValidationMessage For="() => leaveRequest.Reason" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-sm-end justify-content-center pt-3">
+                            <button class="btn btn-primary" type="submit">Submit</button>
+                        </div>
+                    </EditForm>
+                </div>
             </div>
+            <!--Card End-->
         </div>
-        <div class="col-6">
-            <div class="p-3">
-                <input type="text" class="form-control" placeholder="Last name">
-             </div>
-        </div>
-        <div class="col-6">
-            <div class="p-3">
-                <input type="text" class="form-control" placeholder="Last name">
+        <div class="col-sm-4">
+            <!--Start of grid-->
+            <div class="row">
+                @if (PendingAndRejectedLeaves != null && PendingAndRejectedLeaves.Any())
+                {
+                    @foreach (var leave in PendingAndRejectedLeaves)
+                    {
+                        <div class="card text-black bg-@GetCardColor(leave.Status) bg-gradient mb-2 ms-2 opacity-80"
+                             style="max-width: 15rem;">
+                            <strong><div class="card-header">@leave.LeaveType Leave</div></strong>
+                            <div class="card-body">
+                                <h5 class="card-title">Status: @leave.Status</h5>
+                                <p class="card-text">
+                                    Leave Date: @leave.LeaveDate?.ToString("MM/dd/yyyy")<br />
+                                    Days Requested: @leave.DaysRequested<br />
+                                    Reason for Leave: @leave.Reason
+                                </p>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>No pending or rejected leaves found.</p>
+                }
             </div>
-        </div>
-        <div class="col-6">
-            <div class="p-3">
-                <input type="text" class="form-control" placeholder="Last name">
-            </div>
+
+            <!--End of grid-->
         </div>
     </div>
 </div>
-    @code {
+<!-- Toast START-->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert alert-success" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header ">
+            <!--<div style="width: 20px; height: 20px; background-color: red; border-radius: 50%; " class="rounded mr-2"></div>-->
+
+            <strong class="me-auto pl-50">@toastTitle</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body  bg-@typeOfAlert bg-gradient">
+            <strong class="font-weight-bold">@Message</strong>
+        </div>
+    </div>
+</div>
+
+
+<!-- END TOAST-->
+
+
+<!--
+<button @onclick="ShowToast" class="btn btn-primary">Show live toast</button>
+-->
+
+
+<div class="mt-3">
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</div>
+
+
+@code {
+    [Inject]
+    private IJSRuntime JS { get; set; }
+
+    [SupplyParameterFromForm]
+    private LeaveTrackerDto leaveRequest { get; set; } = new();
+
+
+    private string? Reason { get; set; }
+    private string? typeOfAlert;
+    private string? Message;
+    private bool showSuccessMessage = false;
+    private string toastTitle;
+
+    private List<LeaveTrackerDto>? AllLeavesById { get; set; } = new();
+    private List<LeaveTrackerDto>? PendingAndRejectedLeaves { get; set; } = new();
+
+    private int employeeID;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        employeeID = await GetEmployeeIdFromClaims();
+        await GetAllLeavesById(employeeID);
+        leaveRequest.DaysRequested = 1;
+        leaveRequest.EmployeeId = employeeID; // Set Employee ID in leave request
+        leaveRequest.Status = "Pending"; // Default status
+        leaveRequest.LeaveDate = DateTime.Today;
+        leaveRequest.RequestDate = DateTime.Now; // Request date
+        leaveRequest.ApprovalDate = null; // Approval date default to null
 
     }
+    private string GetCardColor(string? status)
+    {
+        return status switch
+        {
+            "Pending" => "warning", // Yellowish color for pending
+            "Rejected" => "danger", // Reddish color for rejected
+            _ => "secondary"        // Default color
+        };
+    }
+    private async Task ShowToast()
+    {
+        // Call the JavaScript function to display the toast
+        await JS.InvokeVoidAsync("showToast");
+    }
+
+    private async Task GetAllLeavesById(int employeeID)
+    {
+        var response = await _httpClient.GetAsync($"https://localhost:7011/api/LeaveTracker/GetLeavesByEmployeeId/{employeeID}");
+        if (response.IsSuccessStatusCode)
+        {
+            AllLeavesById = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
+
+            // Filter for "Pending" and "Rejected" statuses
+            PendingAndRejectedLeaves = AllLeavesById?.Where(leave => leave.Status == "Pending" || leave.Status == "Rejected").ToList();
+        }
+        else
+        {
+            AllLeavesById = new List<LeaveTrackerDto>(); // Handle no records
+            PendingAndRejectedLeaves = new List<LeaveTrackerDto>(); // Empty list for filtered items
+        }
+
+    }
+
+    private async Task<int> GetEmployeeIdFromClaims()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        return idClaim != null ? int.Parse(idClaim.Value) : 0;
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private async Task SubmitLeaveRequest()
+    {
+        try
+        {
+            
+            if (AllLeavesById.Any(leave =>
+                                         leave.LeaveDate.HasValue &&
+                                                leave.LeaveDate== leaveRequest.LeaveDate))
+            {
+                // Logic if the leave date exists
+                toastTitle = "Warning";
+                typeOfAlert = "warning";
+                Message = "Alerady a request is submitted for the day";
+                // showSuccessMessage = true;
+
+
+                await ShowToast();
+                return;
+            }
+            else
+            {
+                // Logic if the leave date does not exist
+                Console.WriteLine("The leave date is unique.");
+            }
+
+            var createResponse = await _httpClient.PostAsJsonAsync("https://localhost:7011/api/LeaveTracker/AddLeave", leaveRequest);
+
+            if (createResponse.IsSuccessStatusCode)
+            {
+                toastTitle = "Sucess";
+                typeOfAlert = "success";
+                Message = "Request sentt submitted successfully!";
+                // showSuccessMessage = true;
+
+
+                await ShowToast();
+                await GetAllLeavesById(employeeID);
+                // Clear status for new entry
+                StateHasChanged();
+                // await Task.Delay(1000);
+                // showSuccessMessage = false;
+                
+            }
+            else
+            {
+                toastTitle = "Warnoiong";
+                typeOfAlert = "danger";
+                Message = "Failed to submit attendance. Please try again.";
+                await ShowToast();
+            }
+        }
+        catch (Exception ex)
+        {
+            typeOfAlert = "danger";
+            Message = $"An error occurred: {ex.Message}";
+            showSuccessMessage = true;
+            StateHasChanged();
+            await Task.Delay(3000);
+            showSuccessMessage = false;
+            StateHasChanged();
+        }
+    }
+}

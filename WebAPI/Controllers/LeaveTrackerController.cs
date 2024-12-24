@@ -140,5 +140,23 @@ namespace WebAPI.Controllers
 
             return Ok(leaves);
         }
+        [HttpPost("ToggleStatus/{id}/{status}")]
+        public async Task<IActionResult> ToggleStatus(int id, string status, DateTime datetime)
+        {
+            try
+            {
+                var leave = await _leaveTrackerService.ToggleStatus(id, status, datetime);
+                if (leave == null)
+                {
+                    return NotFound(new { message = $"No leave record found for ID {id}." });
+                }
+
+                return Ok(leave);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while toggling status.", details = ex.Message });
+            }
+        }
     }
 }

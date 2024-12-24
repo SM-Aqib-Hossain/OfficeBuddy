@@ -1,0 +1,139 @@
+﻿@page "/admin/leave/approveanddelete"
+
+
+
+@using UIPortal.Components.Models
+@inject HttpClient _httpClient
+
+
+
+@using System.Security.Claims
+
+
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+@attribute [Authorize(Roles = "Admin")]
+<h3>ApproveAndDeleteLeave</h3>
+
+
+
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Type of Leave</th>
+            <th>Start Date </th>
+            <th>No. Days</th>
+            <th>Request Date</th>
+            <th>Reason</th>
+            
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in PendingLeavesList)
+        {
+            <tr class=" table-warning">
+
+                <td>@GetEmployeeNameByIdAsync(record.EmployeeId)</td>
+                <td>@GetEmployeedeptByIdAsync(record.EmployeeId)</td>
+                <td>@record.LeaveType</td>
+                <td>@record.LeaveDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.DaysRequested</td>
+                <td>@record.RequestDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.Reason</td>
+                <td>
+                <button class="btn btn-success btn-sm" @onclick="() => ApproveLeave(record.Id)">Approve</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => RejectLeave(record.Id)">Reject</button>
+                </td>
+            </tr>
+
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<EmployeeDto>? AllEmployeeList { get; set; } = new();
+    private List<LeaveTrackerDto>? AllLeavesById { get; set; } = new();
+    private List<LeaveTrackerDto>? PendingLeavesList { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await getPendingLeaves();
+        await getAllEmployee();
+    }
+
+    private async Task getPendingLeaves()
+    {
+        var response = await _httpClient.GetAsync("https://localhost:7011/api/LeaveTracker/GetLeavesByStatus/Pending");
+        if (response.IsSuccessStatusCode)
+        {
+            PendingLeavesList = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
+
+        }
+        else
+        {
+            PendingLeavesList = new List<LeaveTrackerDto>(); // Handle no records
+        }
+    }
+    private async Task getAllEmployee(){
+        var response = await _httpClient.GetAsync("https://localhost:7011/GetEmployees");
+        if (response.IsSuccessStatusCode)
+        {
+            AllEmployeeList = await response.Content.ReadFromJsonAsync<List<EmployeeDto>>();
+
+        }
+        else
+        {
+            AllEmployeeList = new List<EmployeeDto>(); // Handle no records
+        }
+    }
+
+    private string? GetEmployeeNameByIdAsync(int employeeId)
+    {
+        var employee = AllEmployeeList.FirstOrDefault(e => e.Id == employeeId);
+        return employee?.Name;
+    }
+    private string? GetEmployeedeptByIdAsync(int employeeId)
+    {
+        var employee = AllEmployeeList.FirstOrDefault(e => e.Id == employeeId);
+        return employee?.DepartmentName;
+    }
+    private async Task ApproveLeave(int Id)
+    {
+        var timeNow = System.DateTime.Now;
+        var response = await _httpClient.PostAsync($"https://localhost:7011/api/LeaveTracker/ToggleStatus/{Id}/Approved", null);
+        if (response.IsSuccessStatusCode)
+        {
+            // Update the UI after successful approval
+            await getPendingLeaves();
+            StateHasChanged();
+        }
+        else
+        {
+            // Handle error
+            Console.WriteLine($"Failed to approve leave for ID {Id}: {response.StatusCode}");
+        }
+    }
+
+    private async Task RejectLeave(int Id)
+    {
+        var timeNow = System.DateTime.Now;
+        var response = await _httpClient.PostAsync($"https://localhost:7011/api/LeaveTracker/ToggleStatus/{Id}/Rejected", null);
+        if (response.IsSuccessStatusCode)
+        {
+            // Update the UI after successful rejection
+            await getPendingLeaves();
+            StateHasChanged();
+        }
+        else
+        {
+            // Handle error
+            Console.WriteLine($"Failed to reject leave for ID {Id}: {response.StatusCode}");
+        }
+    }
+
+
+}

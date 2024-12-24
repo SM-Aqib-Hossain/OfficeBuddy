@@ -103,5 +103,20 @@ namespace DataAccessLayer.J_Repositories
                 throw new KeyNotFoundException("Leave record not found");
             }
         }
+        public async Task<LeaveTracker> ToggleStatus(int id, string status, DateTime datetime)
+        {
+            var existingLeave = await _dbContext.LeaveTrackers.FindAsync(id);
+            if (existingLeave != null)
+            {
+                existingLeave.Status = status;
+                existingLeave.ApprovalDate = datetime;
+                await _dbContext.SaveChangesAsync();
+                return existingLeave; // Return the modified object
+            }
+            else
+            {
+                throw new KeyNotFoundException("Leave record not found");
+            }
+        }
     }
 }

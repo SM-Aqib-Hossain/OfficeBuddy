@@ -65,5 +65,9 @@ namespace BusinessLogicLayer.J_Services
         {
             return await _leaveTrackerRepository.UpdateLeave(id, leaveTracker);
         }
+        public async Task<LeaveTracker> ToggleStatus(int id, string status, DateTime datetime)
+        {
+            return await _leaveTrackerRepository.ToggleStatus(id, status, datetime);
+        }
     }
 }
