@@ -62,10 +62,37 @@ namespace DataAccessLayer.J_Repositories
             return await _dbContext.LeaveTrackers.Where(l => l.EmployeeId == employeeId).ToListAsync();
         }
 
-        public async Task<List<LeaveTracker>> GetLeavesByDateRange(DateTime startDate, DateTime endDate)
+        //public async Task<List<LeaveTracker>> GetLeavesByDateRange(DateTime startDate, DateTime endDate)
+        //{
+        //    return await _dbContext.LeaveTrackers.Where(l => l.LeaveDate >= startDate && l.LeaveDate <= endDate).ToListAsync();
+        //}
+        public async Task<List<LeaveTracker>> GetLeavesByDateRange(DateTime startDate,  DateTime endDate)
         {
-            return await _dbContext.LeaveTrackers.Where(l => l.LeaveDate >= startDate && l.LeaveDate <= endDate).ToListAsync();
+            // Example: Mock database or data source for LeaveTracker
+            var allLeaves = await _dbContext.LeaveTrackers
+                .Where(leave => leave.Status == "Approved")
+                .ToListAsync();
+
+            // Filter leaves where the current date falls within the leave period
+            var currentLeaves = allLeaves.Where(leave =>
+                
+                leave.DaysRequested > 0 &&
+                startDate.Date >= leave.LeaveDate.Date &&
+                startDate.Date <= leave.LeaveDate.AddDays(leave.DaysRequested - 1).Date
+            ).ToList();
+
+            return currentLeaves;
         }
+
+        public async Task<List<LeaveTracker>> GetFutureLeavesFromADate(DateTime date)
+        {
+            var futureLeaves = await _dbContext.LeaveTrackers
+                .Where(leave => leave.Status == "Approved" && leave.LeaveDate > date)
+                .ToListAsync();
+
+            return futureLeaves;
+        }
+
 
         public async Task<List<LeaveTracker>> GetSickLeaves()
         {

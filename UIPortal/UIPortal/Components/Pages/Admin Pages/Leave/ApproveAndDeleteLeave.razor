@@ -15,7 +15,7 @@
 @rendermode InteractiveServer
 @attribute [StreamRendering]
 @attribute [Authorize(Roles = "Admin")]
-<h3>ApproveAndDeleteLeave</h3>
+<h3>Pennding Leaves</h3>
 
 
 
@@ -55,14 +55,118 @@
     </tbody>
 </table>
 
+<h3>Employees on Leave</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Type of Leave</th>
+            <th>Start Date </th>
+            <th>No. Days</th>
+            <th>Request Date</th>
+            <th>Reason</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in CurrentlyOnLeave)
+        {
+            <tr class=" table-warning">
+
+                <td>@GetEmployeeNameByIdAsync(record.EmployeeId)</td>
+                <td>@GetEmployeedeptByIdAsync(record.EmployeeId)</td>
+                <td>@record.LeaveType</td>
+                <td>@record.LeaveDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.DaysRequested</td>
+                <td>@record.RequestDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.Reason</td>
+                
+            </tr>
+
+        }
+    </tbody>
+</table>
+<h3>Future Leaves</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Type of Leave</th>
+            <th>Start Date </th>
+            <th>No. Days</th>
+            <th>Request Date</th>
+            <th>Reason</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in FutureLeave)
+        {
+            <tr class=" table-warning">
+
+                <td>@GetEmployeeNameByIdAsync(record.EmployeeId)</td>
+                <td>@GetEmployeedeptByIdAsync(record.EmployeeId)</td>
+                <td>@record.LeaveType</td>
+                <td>@record.LeaveDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.DaysRequested</td>
+                <td>@record.RequestDate?.ToString("dd/MM/yyyy")</td>
+                <td>@record.Reason</td>
+
+            </tr>
+
+        }
+    </tbody>
+</table>
+
 @code {
     private List<EmployeeDto>? AllEmployeeList { get; set; } = new();
     private List<LeaveTrackerDto>? AllLeavesById { get; set; } = new();
     private List<LeaveTrackerDto>? PendingLeavesList { get; set; } = new();
+
+    private List<LeaveTrackerDto>? CurrentlyOnLeave { get; set; } = new();
+
+    private List<LeaveTrackerDto>? FutureLeave { get; set; } = new();
     protected override async Task OnInitializedAsync()
     {
         await getPendingLeaves();
         await getAllEmployee();
+        await getCurrentlyLeave();
+        await getFutureLeave();
+    }
+
+    private async Task getFutureLeave()
+    {
+        DateTime date = DateTime.Now;
+        string formattedDate = date.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
+        var response = await _httpClient.GetAsync($"https://localhost:7011/api/LeaveTracker/GetFutureLeavesFromADate/{formattedDate}");
+        if (response.IsSuccessStatusCode)
+        {
+            FutureLeave = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
+
+        }
+        else
+        {
+            FutureLeave = new List<LeaveTrackerDto>(); // Handle no records
+        }
+    }
+
+    private async Task getCurrentlyLeave()
+    {
+        DateTime date = DateTime.Now;
+        string formattedDate = date.ToString("yyyy-MM-dd HH:mm:ss.fffffff");
+
+        var response = await _httpClient.GetAsync($"https://localhost:7011/api/LeaveTracker/GetLeavesByDateRange/dates/{formattedDate}");
+        if (response.IsSuccessStatusCode)
+        {
+            CurrentlyOnLeave = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
+
+        }
+        else
+        {
+            CurrentlyOnLeave = new List<LeaveTrackerDto>(); // Handle no records
+        }
     }
 
     private async Task getPendingLeaves()
@@ -109,6 +213,8 @@
         {
             // Update the UI after successful approval
             await getPendingLeaves();
+            await getCurrentlyLeave();
+            await getFutureLeave();
             StateHasChanged();
         }
         else
@@ -126,6 +232,8 @@
         {
             // Update the UI after successful rejection
             await getPendingLeaves();
+            await getCurrentlyLeave();
+            await getFutureLeave();
             StateHasChanged();
         }
         else

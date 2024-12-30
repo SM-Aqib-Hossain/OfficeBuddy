@@ -1,0 +1,622 @@
+﻿@page "/user/attendance/testRun"
+
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using UIPortal.Components.Models
+@inject HttpClient _httpClient
+@attribute [Authorize(Roles = "User")]
+@attribute [StreamRendering]
+
+@rendermode InteractiveServer
+
+<!-- Toast START-->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert alert-success" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header ">
+            <!--<div style="width: 20px; height: 20px; background-color: red; border-radius: 50%; " class="rounded mr-2"></div>-->
+
+            <strong class="me-auto pl-50">@toastTitle</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body  bg-@typeOfAlert bg-gradient">
+            <strong class="font-weight-bold">@Message</strong>
+        </div>
+    </div>
+</div>
+
+
+<!-- END TOAST-->
+<!-- Employee Info Section -->
+@if (employee != null)
+{
+    <div>
+        <p><strong>Employee:</strong> @employee.Name <strong>Joining Date:</strong> @employee.JoiningDate.ToString("MMMM dd  yyyy")</p>
+        <!--<p><strong>Joining Date:</strong> @employee.JoiningDate.ToString("MMMM dd  yyyy")</p>-->
+    </div>
+
+    <!-- Year Selection Dropdown -->
+
+
+
+    <!-- Attendance Table -->
+
+
+    @if (monthlyAttendance != null && monthlyAttendance.Any())
+    {
+
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-6">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Working Days</th>
+                                <th>Present</th>
+                                <th>Absent</th>
+                                <th>Leave</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var record in monthlyAttendance)
+                            {
+                                <tr>
+                                    <td>@record.MonthName</td>
+                                    <td>@getWorkingDays(record.MonthName, selectedYear)</td>
+                                    <td>@record.PresentCount</td>
+                                    <td>@record.AbsentCount</td>
+                                    <td>@record.LeaveCount</td>
+                                </tr>
+                            }
+
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td></td> <!-- Leave this empty if there's no total for working days -->
+                                <td><strong>@totalPresent</strong></td>
+                                <td><strong>@totalAbsent</strong></td>
+                                <td><strong>@totalLeave</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="col-3">
+                    <p><strong>Sick Leave for Year:</strong> @sickLeaveAvailiableYearly</p>
+                    <p><strong>Casual Leave for Year:</strong> @casualLeaveAvailiableYearly</p>
+                </div>
+                <div class="col-3">
+                    <p><strong>Sick Leave Remaining:</strong> @sickLeaveAvailiable</p>
+                    <p><strong>Casual Leave Remaining:</strong> @casualLeaveAvailiable</p>
+                </div>
+            </div>
+        </div>
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-6">
+                    <div class="card">
+                        <h5 class="card-header">Leave Request</h5>
+                        <div class="card-body">
+                            <EditForm Model="leaveRequest" OnValidSubmit="SubmitLeaveRequest" FormName="SubmitLeaveRequestForm">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary class="text-danger" />
+
+                                <div class="row pt-2">
+                                    <div class="col-sm">
+                                        <label for="LeaveType" class="form-label">Select Type of Leave</label>
+                                        <InputSelect id="LeaveType" class="form-control" @bind-Value="leaveRequest.LeaveType" required>
+                                            <option value="" disabled>Select Leave Type</option>
+                                            <option value="Sick">Sick Leave</option>
+                                            <option value="Casual">Casual Leave</option>
+                                        </InputSelect>
+                                        <ValidationMessage For="() => leaveRequest.LeaveType" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="row pt-2">
+                                    <div class="col-sm">
+                                        <label for="LeaveDate" class="form-label">Select the date to start Leave (mm/dd/yyy)</label>
+                                        <InputDate id="LeaveDate " class="form-control" @bind-Value="leaveRequest.LeaveDate " required />
+                                        <ValidationMessage For="() => leaveRequest.LeaveDate" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="row pt-2">
+                                    <div class="col-sm">
+                                        <label for="DaysRequested" class="form-label">Days Requested incliuding the start of leave day (max 3 min 1)</label>
+                                        <InputNumber id="DaysRequested"
+                                                     class="form-control"
+                                                     @bind-Value="leaveRequest.DaysRequested"
+                                                     min="1"
+                                                     max="3"
+                                                     required />
+                                        <ValidationMessage For="() => leaveRequest.DaysRequested" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="row pt-2">
+                                    <div class="col-sm">
+                                        <label for="reason" class="form-label">Please provide reason for leave.</label>
+                                        <InputTextArea id="reason"
+                                                       class="form-control"
+                                                       @bind-Value="leaveRequest.Reason"
+                                                       rows="3"
+                                                       placeholder="Reason" />
+                                        <ValidationMessage For="() => leaveRequest.Reason" class="text-danger" />
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-sm-end justify-content-center pt-3">
+                                    <button class="btn btn-primary" type="submit">Submit</button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    @if (PendingAndRejectedLeaves != null && PendingAndRejectedLeaves.Any())
+                    {
+                        @foreach (var leave in PendingAndRejectedLeaves)
+                        {
+                            <div class="card text-black bg-@GetCardColor(leave.Status) bg-gradient mb-2 ms-2 opacity-80"
+                                 style="max-width: 15rem;">
+                                <strong><div class="card-header">@leave.LeaveType Leave</div></strong>
+                                <div class="card-body">
+                                    <h5 class="card-title">Status: @leave.Status</h5>
+                                    <p class="card-text">
+                                        Leave Date: @leave.LeaveDate?.ToString("MM/dd/yyyy")<br />
+                                        Days Requested: @leave.DaysRequested<br />
+                                        Reason for Leave: @leave.Reason
+                                    </p>
+                                    @if(leave.Status == "Pending")
+                                    {
+                                        <div class="d-flex justify-content-sm-end justify-content-center pt-3">
+                                            <button class="btn btn-primary" @onclick="() => CancelLeave(leave.Id)">Cancel</button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No pending or rejected leaves found.</p>
+                    }
+                </div>
+                <div class="col-3">
+                    @if (ApprovedList != null && ApprovedList.Any())
+                    {
+                        @foreach (var leave in ApprovedList)
+                        {
+                            <div class="card text-black bg-@GetCardColor(leave.Status) bg-gradient mb-2 ms-2 opacity-80"
+                                 style="max-width: 15rem;">
+                                <strong><div class="card-header">@leave.LeaveType Leave</div></strong>
+                                <div class="card-body">
+                                    <h5 class="card-title">Status: @leave.Status</h5>
+                                    <p class="card-text">
+                                        Leave Date: @leave.LeaveDate?.ToString("MM/dd/yyyy")<br />
+                                        Days Requested: @leave.DaysRequested<br />
+                                        Reason for Leave: @leave.Reason
+                                    </p>
+                                    
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p>No Approved leaves found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <p>Loading attendance data...</p>
+    }
+    else if (!string.IsNullOrEmpty(selectedYear))
+    {
+        <p>No attendance data available for the selected year.</p>
+    }
+
+
+}
+else if (isLoading)
+{
+    <p>Loading employee data...</p>
+}
+else
+{
+    <p>Employee not found!</p>
+}
+
+@code {
+    [Parameter] public int EmployeeId { get; set; }
+
+    private EmployeeDto employee; // Employee details
+    private Dictionary<int, List<AttendanceDto>> attendanceDataByYear = new(); // Dictionary to store attendance data
+    private List<MonthlyAttendance> monthlyAttendance; // Monthly grouped attendance
+    private string selectedYear ; // User-selected year
+    private bool isLoading = true;
+
+    private int totalPresent = 0;
+    private int totalAbsent = 0;
+    private int totalLeave = 0;
+
+    private int casualLeaveAvailiableYearly = 0;
+    private int casualLeaveUsed = 0;
+    private int sickLeaveAvailiableYearly = 0;
+    private int sickLeaveUsed = 0;
+
+    private int casualLeaveAvailiable = 0;
+    private int sickLeaveAvailiable = 0;
+
+    private int allotedSickLeaveYearly = 14;
+    private int allotedCasualLeaveYearly = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployeeData();
+        selectedYear = "2024";
+        await LoadAttendanceData();
+        await LeaveRemainderCounter();
+
+
+        //////
+
+        employeeID = await GetEmployeeIdFromClaims();
+        await GetAllLeavesById(employeeID);
+        leaveRequest.DaysRequested = 1;
+        leaveRequest.EmployeeId = employeeID; // Set Employee ID in leave request
+        leaveRequest.Status = "Pending"; // Default status
+        leaveRequest.LeaveDate = DateTime.Today;
+        leaveRequest.RequestDate = DateTime.Now; // Request date
+        leaveRequest.ApprovalDate = null; // Approval date default to null
+
+    }
+
+    private int getWorkingDays(string monthName, string year)
+    {
+        // Parse the year and month
+        int parsedYear = int.Parse(year);
+        int month = DateTime.ParseExact(monthName, "MMMM", System.Globalization.CultureInfo.InvariantCulture).Month;
+
+        // Get the first and last day of the month
+        DateTime monthStart = new DateTime(parsedYear, month, 1);
+        DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+        // Calculate the working days excluding Fridays and Saturdays
+        int workingDays = 0;
+
+        for (DateTime day = monthStart; day <= monthEnd; day = day.AddDays(1))
+        {
+            if (day.DayOfWeek != DayOfWeek.Friday && day.DayOfWeek != DayOfWeek.Saturday)
+            {
+                workingDays++;
+            }
+        }
+
+        return workingDays;
+    }
+
+
+    private async Task LeaveRemainderCounter()
+    {
+        if (employee.JoiningDate.Year.ToString() == selectedYear)
+        {
+            DateTime joiningDate = employee.JoiningDate;
+            int year = int.Parse(selectedYear);
+            DateTime endDate = new DateTime(year, 12, 31);
+            int monthsLeft = (endDate.Year - joiningDate.Year) * 12 + endDate.Month - joiningDate.Month + 1;
+
+            int monthsForFullYear = (int)Math.Ceiling((double)monthsLeft / 12);
+            casualLeaveAvailiableYearly = (int)Math.Ceiling(((double)monthsLeft / 12) * allotedCasualLeaveYearly);
+            sickLeaveAvailiableYearly = (int)Math.Ceiling(((double)monthsLeft / 12) * allotedSickLeaveYearly);
+
+            casualLeaveUsed = totalAbsent;
+            sickLeaveUsed = totalLeave;
+
+            casualLeaveAvailiable = casualLeaveAvailiableYearly - casualLeaveUsed;
+            sickLeaveAvailiable = sickLeaveAvailiableYearly - sickLeaveUsed;
+
+        }
+        else
+        {
+            casualLeaveAvailiableYearly = allotedCasualLeaveYearly;
+            sickLeaveAvailiableYearly = allotedSickLeaveYearly;
+
+            casualLeaveUsed = totalAbsent;
+            sickLeaveUsed = totalLeave;
+
+            casualLeaveAvailiable = casualLeaveAvailiableYearly - casualLeaveUsed;
+            sickLeaveAvailiable = sickLeaveAvailiableYearly - sickLeaveUsed;
+        }
+
+
+    }
+
+    // Load Employee Details
+    private async Task LoadEmployeeData()
+    {
+        isLoading = true;
+        var employeeId = await GetEmployeeIdFromClaims();
+
+        try
+        {
+            employee = await _httpClient.GetFromJsonAsync<EmployeeDto>($"https://localhost:7011/api/Employees/{employeeId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading employee: " + ex.Message);
+        }
+
+        isLoading = false;
+    }
+
+    // Handle Year Change
+    // private async Task OnYearChanged(ChangeEventArgs e)
+    // {
+    //     selectedYear = e.Value.ToString();
+    //     await LoadAttendanceData();
+    //     await LeaveRemainderCounter();
+    // }
+
+    // Load Attendance Data for the Selected Year
+    private async Task LoadAttendanceData()
+    {
+        if (string.IsNullOrEmpty(selectedYear) || employee == null)
+            return;
+
+        isLoading = true;
+        try
+        {
+            var year = int.Parse(selectedYear);
+            if (!attendanceDataByYear.ContainsKey(year))
+            {
+                // Load attendance data for the current year if not already in the dictionary
+                var employeeId = await GetEmployeeIdFromClaims();
+                var response = await _httpClient.GetAsync($"https://localhost:7011/api/Attendances/employee/{employeeId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var records = await response.Content.ReadFromJsonAsync<List<AttendanceDto>>();
+
+                    // Filter records by year
+                    DateTime startDate = (year == employee.JoiningDate.Year)
+                        ? employee.JoiningDate
+                        : new DateTime(year, 1, 1);
+                    DateTime endDate = new DateTime(year, 12, 31);
+
+                    var filteredRecords = records
+                        .Where(a => a.Date >= startDate && a.Date <= endDate)
+                        .ToList();
+
+                    attendanceDataByYear[year] = filteredRecords;
+                }
+                else
+                {
+                    attendanceDataByYear[year] = new List<AttendanceDto>();
+                }
+            }
+
+            // Process data for display
+            var yearData = attendanceDataByYear[year];
+
+            monthlyAttendance = yearData
+                .GroupBy(a => a.Date.Month)
+                .Select(g => new MonthlyAttendance
+                    {
+                        MonthName = new DateTime(1, g.Key, 1).ToString("MMMM"),
+                        PresentCount = g.Count(a => a.Status == "Present"),
+                        AbsentCount = g.Count(a => a.Status == "Absent"),
+                        LeaveCount = g.Count(a => a.Status == "Leave")
+                    })
+                .ToList();
+
+            // Calculate Totals
+            totalPresent = monthlyAttendance.Sum(m => m.PresentCount);
+            totalAbsent = monthlyAttendance.Sum(m => m.AbsentCount);
+            totalLeave = monthlyAttendance.Sum(m => m.LeaveCount);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while loading attendance: {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    private async Task<int> GetEmployeeIdFromClaims()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        var idClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        return idClaim != null ? int.Parse(idClaim.Value) : 0;
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    // Helper Class for Monthly Attendance
+    public class MonthlyAttendance
+    {
+        public string MonthName { get; set; }
+        public int PresentCount { get; set; }
+        public int AbsentCount { get; set; }
+        public int LeaveCount { get; set; }
+
+    }
+
+
+
+
+    /////////////////////////////
+
+    [Inject]
+    private IJSRuntime JS { get; set; }
+
+    [SupplyParameterFromForm]
+    private LeaveTrackerDto leaveRequest { get; set; } = new();
+
+
+    private string? Reason { get; set; }
+    private string? typeOfAlert;
+    private string? Message;
+    private bool showSuccessMessage = false;
+    private string toastTitle;
+
+    private List<LeaveTrackerDto>? AllLeavesById { get; set; } = new();
+    private List<LeaveTrackerDto>? ApprovedList { get; set; } = new();
+    private List<LeaveTrackerDto>? PendingAndRejectedLeaves { get; set; } = new();
+    private int employeeID;
+
+    private string GetCardColor(string? status)
+    {
+        return status switch
+        {
+            "Pending" => "warning", // Yellowish color for pending
+            "Rejected" => "danger", // Reddish color for rejected
+            "Approved" => "success",
+            _ => "secondary"        // Default color
+        };
+    }
+    private async Task ShowToast()
+    {
+        // Call the JavaScript function to display the toast
+        await JS.InvokeVoidAsync("showToast");
+    }
+
+    private async Task GetAllLeavesById(int employeeID)
+    {
+        var response = await _httpClient.GetAsync($"https://localhost:7011/api/LeaveTracker/GetLeavesByEmployeeId/{employeeID}");
+        if (response.IsSuccessStatusCode)
+        {
+            AllLeavesById = await response.Content.ReadFromJsonAsync<List<LeaveTrackerDto>>();
+
+            // Filter for "Pending" and "Rejected" statuses
+            PendingAndRejectedLeaves = AllLeavesById?.Where(leave => leave.Status == "Pending" || leave.Status == "Rejected").ToList();
+            ApprovedList = AllLeavesById?.Where(leave => leave.Status == "Approved").ToList();
+            
+        }
+        else
+        {
+            AllLeavesById = new List<LeaveTrackerDto>(); // Handle no records
+            PendingAndRejectedLeaves = new List<LeaveTrackerDto>(); // Empty list for filtered items
+        }
+
+    }
+
+    private async Task SubmitLeaveRequest()
+    {
+        try
+        {
+
+            if (AllLeavesById.Any(leave =>
+                                         leave.LeaveDate.HasValue &&
+                                                leave.LeaveDate == leaveRequest.LeaveDate &&
+        leave.Status != "Rejected" ))
+            {
+                // Logic if the leave date exists
+                toastTitle = "Warning";
+                typeOfAlert = "warning";
+                Message = "Alerady a request is submitted for the day";
+                // showSuccessMessage = true;
+
+
+                await ShowToast();
+                return;
+            }
+            else
+            {
+                // Logic if the leave date does not exist
+                Console.WriteLine("The leave date is unique.");
+            }
+
+            var createResponse = await _httpClient.PostAsJsonAsync("https://localhost:7011/api/LeaveTracker/AddLeave", leaveRequest);
+
+            if (createResponse.IsSuccessStatusCode)
+            {
+                toastTitle = "Sucess";
+                typeOfAlert = "success";
+                Message = "Request sentt submitted successfully!";
+                // showSuccessMessage = true;
+
+
+                await ShowToast();
+                await GetAllLeavesById(employeeID);
+                // Clear status for new entry
+                StateHasChanged();
+                // await Task.Delay(1000);
+                // showSuccessMessage = false;
+
+            }
+            else
+            {
+                toastTitle = "Warnoiong";
+                typeOfAlert = "danger";
+                Message = "Failed to submit attendance. Please try again.";
+                await ShowToast();
+            }
+        }
+        catch (Exception ex)
+        {
+            typeOfAlert = "danger";
+            Message = $"An error occurred: {ex.Message}";
+            showSuccessMessage = true;
+            StateHasChanged();
+            await Task.Delay(3000);
+            showSuccessMessage = false;
+            StateHasChanged();
+        }
+    }
+
+
+
+    ////DELETES PENDING LEAVE REQUEST
+    private async Task CancelLeave(int leaveId)
+    {
+        try
+        {
+            // Replace with your actual API endpoint
+            var createResponse = await _httpClient.DeleteAsync($"https://localhost:7011/api/LeaveTracker/DeleteLeave/{leaveId}");
+
+
+            if (createResponse.IsSuccessStatusCode)
+            {
+                // Toast notification for success
+                toastTitle = "Success";
+                typeOfAlert = "success";
+                Message = "Leave request cancelled successfully!";
+                await ShowToast();
+
+                // Refresh leave data for the employee
+                await GetAllLeavesById(employeeID);
+
+                // Update UI
+                StateHasChanged();
+            }
+            else
+            {
+                // Toast notification for failure
+                toastTitle = "Warning";
+                typeOfAlert = "danger";
+                Message = "Failed to cancel leave. Please try again.";
+                await ShowToast();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred while deleting leave: {ex.Message}");
+
+            // Toast notification for exception
+            toastTitle = "Error";
+            typeOfAlert = "danger";
+            Message = "An error occurred while cancelling the leave.";
+            await ShowToast();
+        }
+    }
+
+}
+
+
+
+
+
+

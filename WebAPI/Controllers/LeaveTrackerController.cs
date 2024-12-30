@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers
 {
@@ -57,10 +58,10 @@ namespace WebAPI.Controllers
         }
 
         // GET: api/LeaveTracker/dates
-        [HttpGet("GetLeavesByDateRange/dates")]
-        public async Task<ActionResult<IEnumerable<LeaveTracker>>> GetLeavesByDateRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        [HttpGet("GetLeavesByDateRange/dates/{date}")]
+        public async Task<ActionResult<IEnumerable<LeaveTracker>>> GetLeavesByDateRange( DateTime date, [FromQuery] DateTime endDate)
         {
-            var leaves = await _leaveTrackerService.GetLeavesByDateRange(startDate, endDate);
+            var leaves = await _leaveTrackerService.GetLeavesByDateRange(date, endDate);
 
             if (leaves == null || !leaves.Any())
             {
@@ -158,5 +159,26 @@ namespace WebAPI.Controllers
                 return StatusCode(500, new { message = "An error occurred while toggling status.", details = ex.Message });
             }
         }
+
+        [HttpGet("GetFutureLeavesFromADate/{date}")]
+        public async Task<ActionResult<IEnumerable<LeaveTracker>>> GetFutureLeavesFromADate(DateTime date)
+        {
+            try
+            {
+                var futureLeaves = await _leaveTrackerService.GetFutureLeavesFromADate(date);
+
+                if (futureLeaves == null || !futureLeaves.Any())
+                {
+                    return NotFound(new { message = "No future leave records found after the specified date." });
+                }
+
+                return Ok(futureLeaves);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving future leave records.", details = ex.Message });
+            }
+        }
+
     }
 }

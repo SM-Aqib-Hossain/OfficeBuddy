@@ -69,5 +69,10 @@ namespace BusinessLogicLayer.J_Services
         {
             return await _leaveTrackerRepository.ToggleStatus(id, status, datetime);
         }
+
+        public async Task<List<LeaveTracker>> GetFutureLeavesFromADate(DateTime date)
+        {
+            return await _leaveTrackerRepository.GetFutureLeavesFromADate(date);
+        }
     }
 }

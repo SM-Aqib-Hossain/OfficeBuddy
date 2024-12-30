@@ -141,6 +141,7 @@
 </div>
 
 
+
 @code {
     [Inject]
     private IJSRuntime JS { get; set; }
@@ -171,6 +172,7 @@
         leaveRequest.LeaveDate = DateTime.Today;
         leaveRequest.RequestDate = DateTime.Now; // Request date
         leaveRequest.ApprovalDate = null; // Approval date default to null
+
 
     }
     private string GetCardColor(string? status)
@@ -221,7 +223,7 @@
     {
         try
         {
-            
+
             if (AllLeavesById.Any(leave =>
                                          leave.LeaveDate.HasValue &&
                                                 leave.LeaveDate== leaveRequest.LeaveDate))
@@ -258,7 +260,7 @@
                 StateHasChanged();
                 // await Task.Delay(1000);
                 // showSuccessMessage = false;
-                
+
             }
             else
             {
@@ -279,4 +281,11 @@
             StateHasChanged();
         }
     }
+
+
+
+
+    ////////////////////////////////////////////////
+
+    
 }
