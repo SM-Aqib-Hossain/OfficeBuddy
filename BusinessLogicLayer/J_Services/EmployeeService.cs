@@ -44,9 +44,9 @@ namespace BusinessLogicLayer.J_Services
             return await _employeeRepository.GetEmployeeByIdAsync(id);
         }
 
-        public async Task<Employee> Authenticate(string Name, string Password)
+        public async Task<Employee> Authenticate(int Id, string Password)
         {
-            return await _employeeRepository.Authenticate(Name, Password);
+            return await _employeeRepository.Authenticate(Id, Password);
         }
 
         public async Task UpdateEmployeeAsync(int id, Employee employee)

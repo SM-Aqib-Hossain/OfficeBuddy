@@ -1,6 +1,10 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">UIPortal</a>
+        <a class="navbar-brand" href="">
+            <img src="logoOfficeBuddy-removebg-preview.png" alt="Logo" style="height: 40px; width: auto; margin-right: 10px;" />
+            OfficeBuddy
+        </a>
+
     </div>
 </div>
 
@@ -8,11 +12,16 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+
+        <AuthorizeView Roles="Admin,User">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="">
+                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
 
 <!--        <AuthorizeView Roles ="User">
             <Authorized>

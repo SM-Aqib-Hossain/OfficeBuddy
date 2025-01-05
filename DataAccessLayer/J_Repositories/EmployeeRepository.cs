@@ -61,11 +61,11 @@ namespace DataAccessLayer.J_Repositories
             }
         }
 
-        public async Task<Employee?> Authenticate(string Name, string Password)
+        public async Task<Employee?> Authenticate(int Id, string Password)
         {
             // Simulating authentication by checking the database for matching credentials
             var employee = await _dbContext.Employees
-                .FirstOrDefaultAsync(c => c.Name == Name && c.Password == Password);
+                .FirstOrDefaultAsync(c => c.Id == Id && c.Password == Password);
 
             // Return null if authentication fails
             return employee;

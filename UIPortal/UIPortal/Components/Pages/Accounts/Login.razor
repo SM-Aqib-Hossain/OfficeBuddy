@@ -16,9 +16,9 @@
             <DataAnnotationsValidator />
 
             <div class="mb-3">
-                <label class="form-label">Name</label>
-                <InputText @bind-Value="loginRequestDto.Name" class="form-control" placeholder="Enter your name" />
-                <ValidationMessage For="@(() => loginRequestDto.Name)" class="text-danger" />
+                <label class="form-label">Id</label>
+                <InputNumber @bind-Value="loginRequestDto.Id" class="form-control" placeholder="Enter your Id" />
+                <ValidationMessage For="@(() => loginRequestDto.Id)" class="text-danger" />
             </div>
 
             <div class="mb-3">
@@ -61,7 +61,7 @@
                 {
                         new Claim(ClaimTypes.Name, customer.Name),
                         new Claim(ClaimTypes.Role, customer.Role),
-                        new Claim(ClaimTypes.NameIdentifier, customer.Id.ToString()) 
+                        new Claim(ClaimTypes.NameIdentifier, customer.Id.ToString())
                 };
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -74,7 +74,7 @@
             }
             else
             {
-                errorMessage = "Invalid name or password.";
+                errorMessage = "Invalid Id or password.";
             }
         }
         catch (Exception ex)

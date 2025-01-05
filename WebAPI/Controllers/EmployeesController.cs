@@ -79,10 +79,10 @@ namespace WebAPI.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Authenticate([FromBody] LoginRequestDto loginRequestDto)
         {
-            string Name = loginRequestDto.Name;
+            int Id = loginRequestDto.Id;
             string Password = loginRequestDto.Password;
 
-            var employee = await _employeeService.Authenticate(Name, Password);
+            var employee = await _employeeService.Authenticate(Id, Password);
 
             if (employee == null)
             {
