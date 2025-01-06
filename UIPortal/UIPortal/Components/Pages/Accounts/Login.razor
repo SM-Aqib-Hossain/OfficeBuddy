@@ -7,24 +7,25 @@
 @inject HttpClient _httpClient
 
 @inject NavigationManager Navigation
+<PageTitle>Login</PageTitle>
 
 <h3 class="text-center">Login</h3>
 
 <div class="row justify-content-center">
     <div class="col-lg-4 pt-4 pb-4 border rounded shadow-sm">
-        <EditForm Model="loginRequestDto" OnValidSubmit="Authenticate" FormName="testLoginForm">
+        <EditForm Model="loginRequestStringDto" OnValidSubmit="Convert" FormName="testLoginForm">
             <DataAnnotationsValidator />
 
             <div class="mb-3">
                 <label class="form-label">Id</label>
-                <InputNumber @bind-Value="loginRequestDto.Id" class="form-control" placeholder="Enter your Id" />
-                <ValidationMessage For="@(() => loginRequestDto.Id)" class="text-danger" />
+                <InputText @bind-Value="loginRequestStringDto.Id" class="form-control" placeholder="Enter your Id" />
+                <ValidationMessage For="@(() => loginRequestStringDto.Id)" class="text-danger" />
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <InputText @bind-Value="loginRequestDto.Password" placeholder="Enter your password" type="password" class="form-control" />
-                <ValidationMessage For="@(() => loginRequestDto.Password)" class="text-danger" />
+                <InputText @bind-Value="loginRequestStringDto.Password" placeholder="Enter your password" type="password" class="form-control" />
+                <ValidationMessage For="@(() => loginRequestStringDto.Password)" class="text-danger" />
             </div>
 
             <div class="mb-3 text-center">
@@ -43,9 +44,18 @@
     public HttpContext? HttpContext { get; set; }
 
     [SupplyParameterFromForm]
-    public LoginRequestDto loginRequestDto { get; set; } = new();
+    public LoginRequestStringDto loginRequestStringDto { get; set; } = new();
 
+    public LoginRequestDto loginRequestDto { get; set; } = new();
     private string? errorMessage;
+
+    public async Task Convert()
+    {
+        loginRequestDto.Id = int.Parse(loginRequestStringDto.Id);
+        loginRequestDto.Password = loginRequestStringDto.Password;
+
+        await Authenticate();
+    }
 
     public async Task Authenticate()
     {
