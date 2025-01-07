@@ -65,13 +65,13 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var customer = await response.Content.ReadFromJsonAsync<CustomerDto>();
+                var employee = await response.Content.ReadFromJsonAsync<EmployeeDto>();
 
                 var claims = new List<Claim>
                 {
-                        new Claim(ClaimTypes.Name, customer.Name),
-                        new Claim(ClaimTypes.Role, customer.Role),
-                        new Claim(ClaimTypes.NameIdentifier, customer.Id.ToString())
+                    new Claim(ClaimTypes.Name, employee.Name),
+                    new Claim(ClaimTypes.Role, employee.Role),
+                    new Claim(ClaimTypes.NameIdentifier, employee.Id.ToString())
                 };
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

@@ -26,6 +26,7 @@ namespace DataAccessLayer.J_Repositories
         }
         public async Task<Employee> AddEmployeeAsync(Employee employee)
         {
+            employee.Password = PasswordHasher.HashPassword(employee.Password);
             _dbContext.Employees.Add(employee);
             await _dbContext.SaveChangesAsync();
             return employee;
@@ -64,11 +65,12 @@ namespace DataAccessLayer.J_Repositories
         public async Task<Employee?> Authenticate(int Id, string Password)
         {
             // Simulating authentication by checking the database for matching credentials
-            var employee = await _dbContext.Employees
-                .FirstOrDefaultAsync(c => c.Id == Id && c.Password == Password);
-
-            // Return null if authentication fails
-            return employee;
+            var employee = await _dbContext.Employees.FindAsync(Id);
+            if (employee != null && PasswordHasher.VerifyPassword(Password, employee.Password))
+            {
+                return employee;
+            }
+            throw new UnauthorizedAccessException("Invalid credentials");
         }
         public async Task<Employee> UpdateEmployeeAsync(int id, Employee employee)
         {
@@ -77,14 +79,14 @@ namespace DataAccessLayer.J_Repositories
             {
                 employeeToUpdate.Name = employee.Name;
                 employeeToUpdate.City = employee.City;
-                employeeToUpdate.Password = employee.Password;
+                employeeToUpdate.Password = PasswordHasher.HashPassword(employee.Password);
                 employeeToUpdate.Role = employee.Role;
                 employeeToUpdate.Balance = employee.Balance;
 
                 await _dbContext.SaveChangesAsync();
-                return employeeToUpdate; // Return the updated customer
+                return employeeToUpdate;
             }
-            throw new KeyNotFoundException("Emplyee not found.");
+            throw new KeyNotFoundException("Employee not found.");
         }
         public async Task<int?> GetBalanceById(int id)
         {
