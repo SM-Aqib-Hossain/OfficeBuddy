@@ -176,11 +176,9 @@
                                     }
                                 </div>
                                 </div>
+                                atleastOnePendingLeaveFound = true; // means atleast 1 Pendingleave found
                             }
-                            else
-                            {
-                                <p>No Pending Leave</p>
-                            }
+                            
 
 
                         }
@@ -195,7 +193,7 @@
                     {
                         @foreach (var leave in ApprovedList)
                         {
-                            @if (leave.LeaveDate > System.DateTime.Now.Date)
+                            @if (leave.LeaveDate > System.DateTime.Now.Date && IsCurrentlyOnLeave(leave.LeaveDate, leave.DaysRequested))
                             {
                                 <div class="card text-black bg-@GetCardColor(leave.Status) bg-gradient mb-2 ms-2 opacity-80"
                                 style="max-width: 15rem;">
@@ -210,11 +208,9 @@
                                     
                                 </div>
                             </div>
+                            atleastOneApprovedLeaveFound = true; // means atleast 1 approved leave found
                             }
-                            else
-                            {
-                                <p>No Approved Leave Remaining </p>
-                            }
+                            
                         }
                     }
                     else
@@ -268,7 +264,9 @@ else
 
     private int allotedSickLeaveYearly = 14;
     private int allotedCasualLeaveYearly = 10;
-
+    
+    private bool atleastOneApprovedLeaveFound = false;
+    private bool atleastOnePendingLeaveFound = false;
     protected override async Task OnInitializedAsync()
     {
         await LoadEmployeeData();
@@ -313,6 +311,8 @@ else
 
         return workingDays;
     }
+
+
 
 
     private async Task LeaveRemainderCounter()
@@ -511,7 +511,7 @@ else
             // Filter for "Pending" and "Rejected" statuses
             PendingAndRejectedLeaves = AllLeavesById?.Where(leave => leave.Status == "Pending" || leave.Status == "Rejected").ToList();
             ApprovedList = AllLeavesById?.Where(leave => leave.Status == "Approved").ToList();
-            
+
         }
         else
         {
@@ -630,6 +630,28 @@ else
             await ShowToast();
         }
     }
+
+
+
+    private bool IsCurrentlyOnLeave(DateTime? leaveDate, int daysRequested)
+    {
+        // Ensure leaveDate is not null; provide a default value if it is
+        if (leaveDate == null)
+        {
+            throw new ArgumentNullException(nameof(leaveDate), "Leave date cannot be null.");
+        }
+
+        DateTime lastDay = leaveDate.Value.AddDays(daysRequested - 1);
+
+        if (lastDay >= DateTime.Now.Date)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+
 
 }
 
