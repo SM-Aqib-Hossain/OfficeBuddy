@@ -38,7 +38,7 @@
                 <ValidationMessage For="() => Employee.City" class="text-danger" />
             </div>
 
-            <div class="mb-3">
+            <div class="mb-3" style="display:none;">
                 <label for="balance" class="form-label">Balance:</label>
                 <InputNumber id="balance" @bind-Value="Employee.Balance" class="form-control" />
                 <ValidationMessage For="() => Employee.Balance" class="text-danger" />
@@ -97,6 +97,7 @@
     {
         try
         {
+            
             // Sending POST request to the API
             var response = await _httpClient.PostAsJsonAsync("https://localhost:7011/AddEmployee", Employee);
             departmentDto = await _httpClient.GetFromJsonAsync<DepartmentDto>($"https://localhost:7011/GetDepartmentById/{Employee.DepartmentId}");

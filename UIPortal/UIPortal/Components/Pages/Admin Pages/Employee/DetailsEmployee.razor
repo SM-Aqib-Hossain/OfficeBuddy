@@ -1,0 +1,83 @@
+﻿@page "/employees/details"
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Linq
+@using UIPortal.Components.Models
+@inject NavigationManager NavigationManager
+@inject HttpClient _httpClient
+<!--RENDER MODE-->
+@rendermode InteractiveServer
+<!--RENDER MODE-->
+<h3>Employee Details</h3>
+
+<p>Employee ID: @Id</p>
+<p>Employee Name: @employeeDto?.Name</p>
+<p>Employee City: @employeeDto?.City</p>
+<p>Employee Role: @employeeDto?.Role</p>
+<p>Employee Department ID: @employeeDto?.DepartmentId</p>
+<p>Employee Department Name: @employeeDto?.DepartmentName</p>
+<p>Joining Date: @employeeDto?.JoiningDate.ToString("yyyy-MM-dd")</p>
+
+<h4>Other Employees in the Department:</h4>
+
+       
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    private EmployeeDto employeeDto;
+    private List<EmployeeDto> employees = new List<EmployeeDto>();
+    private IQueryable<EmployeeDto> employeesQueryable;
+    private IQueryable<EmployeeDto> filteredEmployees;
+
+    private string searchTerm = string.Empty;
+
+    PaginationState paginationState = new PaginationState { ItemsPerPage = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch employee details
+            employeeDto = await _httpClient.GetFromJsonAsync<EmployeeDto>($"https://localhost:7011/api/Employees/{Id}");
+            if (employeeDto is null)
+            {
+                NavigationManager.NavigateTo("notfound");
+                return;
+            }
+
+            // Fetch other employees in the same department
+
+            // var departmentEmployees = await _httpClient.GetFromJsonAsync<List<EmployeeDto>>($"https:localhost:7011/GetDepartmentById/{employeeDto.DepartmentId}");
+            //     employees = departmentEmployees?.Where(emp => emp.Id != employeeDto.Id).ToList() ?? new List<EmployeeDto>();
+            
+
+            // Convert list to IQueryable for filtering and pagination
+            employeesQueryable = employees.AsQueryable();
+            filteredEmployees = employeesQueryable;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing page: {ex.Message}");
+        }
+    }
+
+    private void FilterEmployees(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredEmployees = employeesQueryable;
+        }
+        else
+        {
+            filteredEmployees = employeesQueryable
+                .Where(emp => emp.Name != null && emp.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+        StateHasChanged();
+    }
+//
+
+//
+}

@@ -1,0 +1,94 @@
+﻿
+@page "/department/edit"
+<!--RENDER MODDE-->
+@rendermode InteractiveServer
+<!--RENDER MODDE-->
+
+@using UIPortal.Components.Models
+@using System.Net.Http.Json
+@inject HttpClient _httpClient
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Edit Department</PageTitle>
+
+<h1>Edit Department</h1>
+
+<h2>@message</h2>
+
+@if (department is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="department" OnValidSubmit="UpdateDepartment" FormName="editDepartmentForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+<InputText id="name" @bind-Value="department.Name" class="form-control" />
+<ValidationMessage For="@(() => department.Name)" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location:</label>
+<InputText id="location" @bind-Value="department.Location" class="form-control" />
+<ValidationMessage For="@(() => department.Location)" class="text-danger" />
+        </div>
+
+                <div class="mb-3">
+            <label for="employees" class="form-label">Employee IDs:</label>
+            <InputTextArea id="employees" @bind-Value="employeeIds" class="form-control" />
+            <ValidationMessage For="@(() => employeeIds)" class="text-danger" />
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+}
+
+<div>
+    <a href="/departments">Back to List</a>
+</div>
+
+@code {
+    public string message = "";
+    private DepartmentDto? department;
+    private string employeeIds = "";
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        department = await _httpClient.GetFromJsonAsync<DepartmentDto>($"https://localhost:7011/GetDepartmentById/{Id}");
+
+        if (department != null)
+        {
+            message = "Department found.";
+            employeeIds = string.Join(", ", department.EmployeeId ?? new List<int>());
+        }
+        else
+        {
+            message = "Department not found.";
+        }
+    }
+
+    private async Task UpdateDepartment()
+    {
+        department.EmployeeId = employeeIds.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                  .Select(id => int.TryParse(id.Trim(), out int result) ? result : (int?)null)
+                                  .Where(id => id.HasValue)
+                                  .Select(id => id.Value)
+                                  .ToList();
+        var response = await _httpClient.PutAsJsonAsync($"https://localhost:7011/UpdateDepartment/{Id}", department);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/department/viewAllAndDelete");
+        }
+        else
+        {
+            Console.WriteLine("Error updating department.");
+        }
+    }
+}

@@ -16,8 +16,8 @@ namespace DataAccessLayer.Entities
         public int? Balance { get; set; }
 
         // Foreign Key
-        public int DepartmentId { get; set; }
-        public string  DepartmentName { get; set; }
+        public int? DepartmentId { get; set; }
+        public string?  DepartmentName { get; set; }
 
         public DateTime JoiningDate { get; set; }
     }
